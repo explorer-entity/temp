@@ -239,6 +239,14 @@ def get_geofence(patient_id):
 @app.route('/api/add_reminder', methods=['POST'])
 def add_reminder():
     data = request.get_json() or {}
+    # Accept friendly aliases so callers can use {medicine, time} as well.
+    if 'title' not in data and 'medicine' in data:
+        data['title'] = data['medicine']
+    if 'reminder_time' not in data and 'time' in data:
+        data['reminder_time'] = data['time']
+    missing = [f for f in ('patient_id', 'title', 'reminder_time') if f not in data]
+    if missing:
+        return jsonify({"status": "error", "missing": missing}), 400
     conn = get_db_connection()
     conn.execute('''
         INSERT INTO Reminders (patient_id, title, reminder_time, repeat_daily)
