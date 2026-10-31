@@ -242,12 +242,52 @@ family in the loop even across the distances that define NER caregiving.
 
 ---
 
-## Appendix A — Verified prototype run (Oct 31, 2026)
+## Appendix A — Verified prototype run (Oct 31 – Nov 1, 2026)
+
+All checks below were executed against the live Flask server in this repository;
+the transcript is reproducible with `curl` as shown.
+
 Patient registered (Moderate stage) → Home (200 m) + Temple (150 m) zones created →
 in-zone ping: no alert → two far-outside pings: single debounced alert
 `Left Safe Zone (Temple, 74741m away)` → history returns ordered trail → after 6 logged
 sessions the engine recommends *Hard* for Word–Picture Match (EMA above band) and
 *Medium* for Story Detective, each with rationale and priority ordering.
+
+### A.1 Reproduction commands
+```bash
+pip install -r requirements.txt && python setup_db.py
+python app.py &        # serves http://127.0.0.1:5000
+
+# Pages (all returned HTTP 200 in re-verification, Nov 1 2026):
+curl -s -o /dev/null -w "%{http_code}\n" \
+  http://127.0.0.1:5000/static/home.html \
+  http://127.0.0.1:5000/static/caregiver-dashboard.html \
+  http://127.0.0.1:5000/static/games/word_picture_match.html \
+  http://127.0.0.1:5000/static/games/story_detective.html \
+  http://127.0.0.1:5000/static/ask-smriti-demo.html
+
+# Geofencing: create zone, ping inside (safe), ping twice outside (debounced breach)
+curl -s -X POST http://127.0.0.1:5000/api/set_geofence_v2 \
+     -H 'Content-Type: application/json' \
+     -d '{"user_id":1,"name":"Temple","radius_m":150}'
+curl -s -X POST http://127.0.0.1:5000/api/update_location \
+     -H 'Content-Type: application/json' -d '{"user_id":1,"lat":..,"lon":..}'
+curl -s http://127.0.0.1:5000/api/alerts/1
+
+# AI recommendations after logging sessions via /api/save_score
+curl -s http://127.0.0.1:5000/api/ai/recommendations/1
+```
+
+### A.2 Post-hoc fixes verified during re-testing (Nov 1, 2026)
+- `/api/add_reminder` previously returned HTTP 500 (`KeyError: 'title'`) on malformed
+  payloads; it now accepts field aliases (`medicine`/`time`) and returns a structured
+  `400 {"missing": [...]}` instead of crashing. Re-tested: valid call ✔, alias call ✔,
+  invalid call → clean 400 JSON ✔.
+- Legacy single-zone endpoint `/api/set_geofence` had an `ON CONFLICT` mismatch against
+  the v2 multi-zone schema; fixed and re-verified working alongside v2 endpoints.
+- PWA asset paths (manifest/sw registration) corrected so all 8 core URLs serve 200.
+
+---
 
 ## References (selected)
 1. WHO. *Global status report on the public health response to dementia*, 2021–2024 updates.
