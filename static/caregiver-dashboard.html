@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manova - Caregiver Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: Arial, sans-serif;
+        background: #f0f4f8;
+        color: #1a2a3a;
+        padding: 20px;
+    }
+    .dashboard { max-width: 1100px; margin: 0 auto; }
+
+    header {
+        background: #2c5f8a;
+        color: white;
+        padding: 18px 24px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    header h1 { font-size: 24px; }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 800px) {
+        .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+        background: white;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+    }
+    .card h2 {
+        font-size: 19px;
+        color: #2c5f8a;
+        margin-bottom: 14px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+    .safe { background: #d4edda; color: #155724; }
+    .alert { background: #f8d7da; color: #721c24; }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 15px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .label { color: #666; }
+    .value { font-weight: 600; }
+
+    #caregiverMap {
+        height: 230px;
+        border-radius: 12px;
+        margin-top: 8px;
+        background: #e9ecef;
+    }
+
+    .big-stat {
+        font-size: 34px;
+        font-weight: bold;
+        color: #2c5f8a;
+        text-align: center;
+    }
+
+    .alert-item {
+        background: #fff8f0;
+        border-left: 5px solid #e67e22;
+        padding: 12px 14px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .alert-item.active {
+        border-left-color: #e74c3c;
+        background: #fdf2f2;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .action-btn {
+        padding: 15px 10px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+    }
+    .btn-call { background: #27ae60; }
+    .btn-message { background: #3498db; }
+    .btn-history { background: #8e44ad; }
+
+    .delete-reminder {
+        border: none;
+        background: #f8d7da;
+        color: #721c24;
+        padding: 6px 9px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .reminder-item {
+        background: #f7f9fb;
+        border: 1px solid #e5e9ed;
+        padding: 10px 12px;
+        border-radius: 9px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .reminder-main {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .reminder-time {
+        font-weight: bold;
+        color: #2c5f8a;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 25px;
+        color: #2c5f8a;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 16px;
+    }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <header>
+        <h1>🩺 Manova Caregiver Dashboard</h1>
+        <div style="background:white; color:#2c5f8a; padding:8px 16px; border-radius:8px; font-weight:bold;">
+            Demo Patient
+        </div>
+    </header>
+
+    <div class="card" id="caregiverSetupCard">
+        <h2>🔗 Caregiver Setup</h2>
+
+        <div id="setupStep1">
+            <p style="font-size:14px; color:#666; margin-bottom:10px;">
+                Register as a caregiver to get your own ID and connect to a patient.
+            </p>
+            <input type="text" id="caregiverNameInput" placeholder="Your name"
+                style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <button class="action-btn btn-call" style="width:100%;" onclick="registerCaregiver()">
+                Register as Caregiver
+            </button>
+        </div>
+
+        <div id="setupStep2" style="display:none;">
+            <p style="font-size:14px; color:#666; margin-bottom:10px;">
+                Your Caregiver ID: <strong id="caregiverIdText"></strong>
+            </p>
+            <input type="number" id="patientIdInput" placeholder="Patient ID to connect"
+                style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <button class="action-btn btn-message" style="width:100%;" onclick="connectToPatient()">
+                Connect to Patient
+            </button>
+        </div>
+
+        <div id="setupStep3" style="display:none;">
+            <p style="font-size:14px; color:#666; margin-bottom:8px;">Viewing patient:</p>
+            <select id="patientSelector"
+                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:10px; font-size:15px;"
+                onchange="switchPatient()"></select>
+            <button class="action-btn btn-history" style="width:100%;" onclick="showSetupStep(2)">
+                + Connect Another Patient
+            </button>
+        </div>
+    </div>
+
+    <div class="grid">
+
+        <!-- Patient Overview -->
+        <div class="card">
+            <h2>👤 Patient Overview</h2>
+            <div class="status-badge safe" id="statusBadge">● Safe</div>
+            <div class="info-row"><span class="label">Name</span><span class="value">Demo Patient</span></div>
+            <div class="info-row"><span class="label">Age</span><span class="value">72 years</span></div>
+            <div class="info-row"><span class="label">Last Active</span><span class="value" id="lastActive">Just now</span></div>
+            <div class="info-row"><span class="label">App Status</span><span class="value">Online</span></div>
+        </div>
+
+        <!-- Location -->
+        <div class="card">
+            <h2>📍 Current Location</h2>
+            <div id="caregiverMap"></div>
+            <div class="info-row" style="margin-top:10px;">
+                <span class="label">Last Updated</span>
+                <span class="value" id="locationTime">Not available</span>
+            </div>
+        </div>
+
+        <!-- Safe Zone / Geofence -->
+        <div class="card">
+            <h2>🛡️ Safe Zone</h2>
+            <p style="font-size:14px; color:#666; margin-bottom:10px;">
+                Set an allowed area around the patient's last known location.
+                The backend will create an alert if the patient moves outside it.
+            </p>
+
+            <div class="info-row">
+                <span class="label">Radius</span>
+                <span class="value">
+                    <input type="number" id="radiusInput" value="200" min="20" max="5000"
+                        style="width:100px; padding:7px; border:1px solid #ccc; border-radius:7px;">
+                    meters
+                </span>
+            </div>
+
+            <button class="action-btn btn-call" style="width:100%; margin-top:12px;"
+                    onclick="setGeofenceAtLastLocation()">
+                📍 Set Safe Zone Here
+            </button>
+
+            <div id="geofenceStatus" style="font-size:13px; color:#666; margin-top:10px;">
+                No safe zone loaded yet.
+            </div>
+        </div>
+
+        <!-- Patient Reminders -->
+        <div class="card">
+            <h2>⏰ Patient Reminders</h2>
+            <p style="font-size:14px; color:#666; margin-bottom:10px;">
+                Add a daily reminder for the patient. The patient app checks
+                these reminders and can announce them by voice.
+            </p>
+
+            <input type="text" id="reminderTitle"
+                placeholder="e.g. Take morning medicine"
+                style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+
+            <input type="time" id="reminderTime"
+                style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+
+            <button class="action-btn btn-message" style="width:100%;"
+                    onclick="addReminder()">
+                + Add Daily Reminder
+            </button>
+
+            <div id="remindersList" style="margin-top:14px;">
+                <p style="color:#888;">No reminders loaded</p>
+            </div>
+        </div>
+
+        <!-- Cognitive Progress -->
+        <div class="card">
+            <h2>🧠 Cognitive Progress</h2>
+            <div class="big-stat" id="gamesPlayedStat">0</div>
+            <p style="text-align:center; margin-bottom:12px;">Games played</p>
+            <div class="info-row">
+                <span class="label">Total Score</span>
+                <span class="value" id="totalScore">0</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Status</span>
+                <span class="value">Active</span>
+            </div>
+        </div>
+
+        <!-- SOS Alerts -->
+        <div class="card">
+            <h2>🆘 Recent SOS Alerts</h2>
+            <div id="alertsList">
+                <p style="color:#888;">No alerts yet</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <h2>⚡ Quick Actions</h2>
+            <div class="actions">
+                <button class="action-btn btn-call" onclick="alert('Calling patient...')">📞 Call Patient</button>
+                <button class="action-btn btn-message" onclick="alert('Reminder sent!')">💬 Send Reminder</button>
+                <button class="action-btn btn-history" onclick="alert('Activity log')">📋 Activity Log</button>
+            </div>
+        </div>
+
+    </div>
+
+    <a href="home.html" class="back-link">← Back to Patient App</a>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Which patient this dashboard is showing. Defaults to 1 (the demo
+    // patient) but can be overridden with ?patient=2 in the URL, or by
+    // picking from the caregiver's connected patients below — this is
+    // the same ID as USER_ID in home.html / story_detective.html / app.py.
+    const params = new URLSearchParams(window.location.search);
+    let PATIENT_ID = Number(params.get('patient')) || 1;
+
+    // The logged-in caregiver, once registered — persists across visits.
+    let CAREGIVER_ID = Number(localStorage.getItem("manovaCaregiverId")) || null;
+
+    let map, marker;
+
+    // Latest patient coordinates received from Flask.
+    let lastKnownLat = null;
+    let lastKnownLng = null;
+
+    // Leaflet circle representing the saved safe zone.
+    let geofenceCircle = null;
+
+    function initMap(lat = 28.6139, lng = 77.2090) {
+        if (map) {
+            map.setView([lat, lng], 15);
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng]).addTo(map)
+                .bindPopup("Patient’s last known location").openPopup();
+            return;
+        }
+        map = L.map('caregiverMap').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup("Patient’s last known location").openPopup();
+    }
+
+    function showSetupStep(step) {
+        document.getElementById("setupStep1").style.display = step === 1 ? "block" : "none";
+        document.getElementById("setupStep2").style.display = step === 2 ? "block" : "none";
+        document.getElementById("setupStep3").style.display = step === 3 ? "block" : "none";
+
+        if (step === 2 && CAREGIVER_ID) {
+            document.getElementById("caregiverIdText").textContent = CAREGIVER_ID;
+        }
+    }
+
+    function registerCaregiver() {
+        const name = document.getElementById("caregiverNameInput").value.trim();
+
+        if (!name) {
+            alert("Please enter your name.");
+            return;
+        }
+
+        fetch('/api/register_caregiver', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        })
+        .then(res => res.json())
+        .then(result => {
+            CAREGIVER_ID = result.user_id;
+            localStorage.setItem("manovaCaregiverId", CAREGIVER_ID);
+            showSetupStep(2);
+        })
+        .catch(err => {
+            console.error('Caregiver registration failed:', err);
+            alert('Could not register right now — check the server is running.');
+        });
+    }
+
+    function connectToPatient() {
+        const patientId = Number(document.getElementById("patientIdInput").value);
+
+        if (!patientId) {
+            alert("Please enter a valid patient ID.");
+            return;
+        }
+
+        fetch('/api/link_caregiver', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                caregiver_id: CAREGIVER_ID,
+                patient_id: patientId
+            })
+        })
+        .then(res => res.json())
+        .then(() => {
+            document.getElementById("patientIdInput").value = "";
+            loadLinkedPatients();
+        })
+        .catch(err => {
+            console.error('Connect failed:', err);
+            alert('Could not connect right now — check the server is running.');
+        });
+    }
+
+    function loadLinkedPatients() {
+        if (!CAREGIVER_ID) return;
+
+        fetch(`/api/caregiver/${CAREGIVER_ID}/patients`)
+            .then(res => res.json())
+            .then(patients => {
+                if (!patients || patients.length === 0) {
+                    showSetupStep(2);
+                    return;
+                }
+
+                const selector = document.getElementById("patientSelector");
+                selector.innerHTML = "";
+
+                patients.forEach(p => {
+                    const opt = document.createElement("option");
+                    opt.value = p.id;
+                    opt.textContent = `${p.name} (ID ${p.id})`;
+                    selector.appendChild(opt);
+                });
+
+                // Keep viewing the current patient if still linked,
+                // otherwise fall back to the first connected one.
+                const stillLinked = patients.some(p => p.id === PATIENT_ID);
+                if (!stillLinked) {
+                    PATIENT_ID = patients[0].id;
+                }
+                selector.value = PATIENT_ID;
+
+                const current = patients.find(p => p.id === PATIENT_ID);
+                if (current) {
+                    document.querySelector('header div').textContent = current.name;
+                }
+
+                showSetupStep(3);
+                loadData();
+            })
+            .catch(err => console.error('Loading linked patients failed:', err));
+    }
+
+    function switchPatient() {
+        PATIENT_ID = Number(document.getElementById("patientSelector").value);
+        loadData();
+
+        fetch(`/api/caregiver/${CAREGIVER_ID}/patients`)
+            .then(res => res.json())
+            .then(patients => {
+                const current = patients.find(p => p.id === PATIENT_ID);
+                if (current) {
+                    document.querySelector('header div').textContent = current.name;
+                }
+            })
+            .catch(err => console.error('Patient name lookup failed:', err));
+    }
+
+    function drawGeofence(zone) {
+        if (!map || !zone) return;
+
+        if (geofenceCircle) {
+            map.removeLayer(geofenceCircle);
+        }
+
+        geofenceCircle = L.circle(
+            [Number(zone.center_lat), Number(zone.center_lng)],
+            {
+                radius: Number(zone.radius_meters),
+                color: "#2c5f8a",
+                fillOpacity: 0.12
+            }
+        ).addTo(map);
+
+        document.getElementById("geofenceStatus").textContent =
+            `Safe zone: ${Math.round(zone.radius_meters)} m radius`;
+    }
+
+    async function loadGeofence() {
+        try {
+            const res = await fetch(`/api/geofence/${PATIENT_ID}`);
+            if (!res.ok) throw new Error(`Geofence request failed (${res.status})`);
+
+            const zone = await res.json();
+
+            if (zone) {
+                const radiusEl = document.getElementById("radiusInput");
+                if (document.activeElement !== radiusEl) {
+                    radiusEl.value = Math.round(zone.radius_meters);
+                }
+                    
+                drawGeofence(zone);
+            } else {
+                if (geofenceCircle && map) {
+                    map.removeLayer(geofenceCircle);
+                    geofenceCircle = null;
+                }
+                document.getElementById("geofenceStatus").textContent =
+                    "No safe zone set for this patient.";
+            }
+        } catch (err) {
+            console.error("Geofence fetch failed:", err);
+            document.getElementById("geofenceStatus").textContent =
+                "Could not load safe zone.";
+        }
+    }
+
+    async function setGeofenceAtLastLocation() {
+        if (lastKnownLat === null || lastKnownLng === null) {
+            alert("No patient location is available yet. Wait for a location update.");
+            return;
+        }
+
+        const radius = Number(document.getElementById("radiusInput").value || 200);
+
+        if (!Number.isFinite(radius) || radius < 20) {
+            alert("Please enter a radius of at least 20 meters.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/set_geofence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    patient_id: PATIENT_ID,
+                    center_lat: lastKnownLat,
+                    center_lng: lastKnownLng,
+                    radius_meters: radius
+                })
+            });
+
+            if (!res.ok) throw new Error(`Set geofence failed (${res.status})`);
+
+            drawGeofence({
+                center_lat: lastKnownLat,
+                center_lng: lastKnownLng,
+                radius_meters: radius
+            });
+
+            alert("Safe zone set successfully.");
+        } catch (err) {
+            console.error("Set geofence failed:", err);
+            alert("Could not set the safe zone. Check that the Flask server is running.");
+        }
+    }
+
+    async function addReminder() {
+        const title = document.getElementById("reminderTitle").value.trim();
+        const time = document.getElementById("reminderTime").value;
+
+        if (!title || !time) {
+            alert("Please enter both a reminder and a time.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/add_reminder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    patient_id: PATIENT_ID,
+                    title: title,
+                    reminder_time: time,
+                    repeat_daily: 1
+                })
+            });
+
+            if (!res.ok) throw new Error(`Add reminder failed (${res.status})`);
+
+            document.getElementById("reminderTitle").value = "";
+            document.getElementById("reminderTime").value = "";
+
+            await loadReminders();
+        } catch (err) {
+            console.error("Add reminder failed:", err);
+            alert("Could not add the reminder. Check that the Flask server is running.");
+        }
+    }
+
+    async function deleteReminder(reminderId) {
+        try {
+            const res = await fetch(`/api/reminders/${reminderId}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) throw new Error(`Delete reminder failed (${res.status})`);
+
+            await loadReminders();
+        } catch (err) {
+            console.error("Delete reminder failed:", err);
+            alert("Could not delete the reminder.");
+        }
+    }
+
+    async function loadReminders() {
+        try {
+            const res = await fetch(`/api/reminders/${PATIENT_ID}`);
+            if (!res.ok) throw new Error(`Reminder request failed (${res.status})`);
+
+            const reminders = await res.json();
+            const list = document.getElementById("remindersList");
+
+            if (!reminders || reminders.length === 0) {
+                list.innerHTML = `<p style="color:#888;">No reminders set</p>`;
+                return;
+            }
+
+            list.innerHTML = reminders.map(r => `
+                <div class="reminder-item">
+                    <div class="reminder-main">
+                        <span class="reminder-time">⏰ ${r.reminder_time}</span>
+                        <span>${escapeHtml(r.title)}</span>
+                    </div>
+                    <button class="delete-reminder"
+                            onclick="deleteReminder(${Number(r.id)})">
+                        Delete
+                    </button>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error("Load reminders failed:", err);
+            document.getElementById("remindersList").innerHTML =
+                `<p style="color:#888;">Could not load reminders</p>`;
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    async function loadData() {
+
+        // Cognitive progress — pulled from the real backend, not
+        // localStorage, so this works from a different device than
+        // the patient's own phone.
+        try {
+            const progressRes = await fetch(`/api/progress/${PATIENT_ID}`);
+            const progressData = await progressRes.json();
+            const history = progressData.history || [];
+
+            const totalScore = history.reduce(
+                (sum, row) => sum + row.score, 0
+            );
+
+            document.getElementById("totalScore").textContent = totalScore;
+            document.getElementById("gamesPlayedStat").textContent = history.length;
+        } catch (err) {
+            console.error("Progress fetch failed:", err);
+        }
+
+        // Location
+        try {
+            const locRes = await fetch(`/api/latest_location/${PATIENT_ID}`);
+
+            if (locRes.ok) {
+                const loc = await locRes.json();
+
+                // Keep the latest patient coordinates for the safe-zone button.
+                lastKnownLat = Number(loc.latitude);
+                lastKnownLng = Number(loc.longitude);
+
+                initMap(lastKnownLat, lastKnownLng);
+                document.getElementById("locationTime").textContent =
+                    loc.timestamp || "Recently";
+            } else {
+                lastKnownLat = null;
+                lastKnownLng = null;
+                initMap();
+                document.getElementById("locationTime").textContent =
+                    "Not available yet";
+            }
+        } catch (err) {
+            console.error("Location fetch failed:", err);
+            initMap();
+        }
+
+        // SOS Alerts — requires the /api/alerts/<id> and /api/trigger_alert
+        // endpoints (see the app.py snippet alongside this file).
+        try {
+            const alertsRes = await fetch(`/api/alerts/${PATIENT_ID}`);
+            const alerts = await alertsRes.json();
+
+            const list = document.getElementById("alertsList");
+            const badge = document.getElementById("statusBadge");
+
+            if (!alerts || alerts.length === 0) {
+                list.innerHTML = `<p style="color:#888;">No alerts yet</p>`;
+                badge.className = "status-badge safe";
+                badge.textContent = "● Safe";
+            } else {
+                list.innerHTML = "";
+                let hasActive = false;
+
+                alerts.slice(0, 5).forEach(a => {
+                    const div = document.createElement("div");
+                    div.className = "alert-item" + (a.status === "Active" ? " active" : "");
+                    div.innerHTML =
+                        `<strong>${a.type}</strong><br><small>${a.timestamp} • ${a.status}</small>`;
+                    list.appendChild(div);
+                    if (a.status === "Active") hasActive = true;
+                });
+
+                badge.className = hasActive ? "status-badge alert" : "status-badge safe";
+                badge.textContent = hasActive ? "● Needs Attention" : "● Safe";
+            }
+        } catch (err) {
+            console.error("Alerts fetch failed:", err);
+        }
+            await loadGeofence();
+        await loadReminders();
+    }
+    if (CAREGIVER_ID) {
+        loadLinkedPatients();
+    } else {
+        showSetupStep(1);
+    }
+
+    loadData();
+    setInterval(loadData, 4000);
+</script>
+</body>
+</html>

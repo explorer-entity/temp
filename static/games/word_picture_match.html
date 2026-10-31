@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="/static/manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Picture Match</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7f8;color:#222;margin:0;padding:25px}
+.screen{max-width:800px;margin:auto;text-align:center}
+.game-card{background:#eef4fb;padding:25px;margin:20px 0;border-radius:20px}
+.game-card button{width:100%;min-height:80px;margin:10px 0;border:2px solid #315c8c;border-radius:15px;background:white;font-size:26px}
+.game-card button:hover{background:#d9ecff}
+.picture{font-size:100px;margin:20px}
+.feedback{font-size:28px;font-weight:bold;min-height:45px;margin:15px}
+.score{font-size:25px;font-weight:bold}
+.back-btn,.voice-btn{padding:18px 25px;font-size:24px;border:none;border-radius:15px;color:white;margin:15px}
+.back-btn{background:#315c8c}
+.voice-btn{background:#6947a8}
+</style>
+</head>
+<body>
+<section id="wordGame" class="screen">
+<h2>🍎 Word–Picture Match</h2>
+<div class="score">Score: <span id="gameScore">0</span></div>
+<div class="game-card">
+<p>Which picture matches:</p>
+<h2 id="wordQuestion">APPLE</h2>
+<div class="picture" id="gamePicture">🍎</div>
+<div id="answers"></div>
+<div id="feedback" class="feedback"></div>
+<button class="voice-btn" onclick="voiceAnswer()">🎙️ Speak Answer</button>
+</div>
+<button class="back-btn" onclick="window.location.href='../home.html'">← Back Home</button>
+</section>
+
+<script>
+let currentQuestion = 0;
+let score = 0;
+
+const questions = [
+ {word:"APPLE",picture:"🍎",answers:["APPLE","HOUSE","TREE"],correct:"APPLE"},
+ {word:"HOUSE",picture:"🏠",answers:["TREE","HOUSE","APPLE"],correct:"HOUSE"},
+ {word:"TREE",picture:"🌳",answers:["APPLE","TREE","HOUSE"],correct:"TREE"}
+];
+
+function startGame(){
+ currentQuestion=0;
+ score=0;
+ document.getElementById("gameScore").textContent=score;
+ displayQuestion();
+}
+
+function displayQuestion(){
+ const q=questions[currentQuestion];
+ document.getElementById("wordQuestion").textContent=q.word;
+ document.getElementById("gamePicture").textContent=q.picture;
+ const answers=document.getElementById("answers");
+ answers.innerHTML="";
+ q.answers.forEach(answerText=>{
+   const button=document.createElement("button");
+   button.textContent=answerText;
+   button.onclick=()=>answer(answerText);
+   answers.appendChild(button);
+ });
+ document.getElementById("feedback").textContent="";
+}
+
+async function saveScore(){
+ const userId=Number(localStorage.getItem("manovaUserId"))||1;
+ const response=await fetch("/api/save_score",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+     user_id:userId,
+     game_type:"word_picture_match",
+     score:score,
+     difficulty:"Easy"
+   })
+ });
+ if(!response.ok) throw new Error("Score save failed: HTTP "+response.status);
+ return response.json();
+}
+
+function answer(selectedAnswer){
+ document.querySelectorAll("#answers button").forEach(b=>b.disabled=true);
+ const q=questions[currentQuestion];
+ const feedback=document.getElementById("feedback");
+
+ if(selectedAnswer===q.correct){
+   score++;
+   feedback.textContent="✓ Correct! Well done!";
+ }else{
+   feedback.textContent="✗ Not quite. Try the next one!";
+ }
+
+ document.getElementById("gameScore").textContent=score;
+
+ setTimeout(async()=>{
+   currentQuestion++;
+
+   if(currentQuestion>=questions.length){
+     localStorage.setItem("smritiScore",score);
+
+     feedback.textContent="🎉 Game complete! Saving your score...";
+
+     try{
+       await saveScore();
+       feedback.textContent="🎉 Game complete! Score saved.";
+     }catch(error){
+       console.error(error);
+       feedback.textContent="🎉 Game complete! Score could not be synced.";
+     }
+
+     setTimeout(()=>{
+       window.location.href="../home.html?screen=progress";
+     },700);
+   }else{
+     displayQuestion();
+   }
+ },900);
+}
+
+function voiceAnswer(){
+ if(!("webkitSpeechRecognition" in window)&&!("SpeechRecognition" in window)){
+   alert("Voice recognition is not supported in this browser.");
+   return;
+ }
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ const recognition=new SpeechRecognition();
+ recognition.lang="en-IN";
+ recognition.start();
+
+ recognition.onresult=function(event){
+   const spoken=event.results[0][0].transcript.toUpperCase();
+   const q=questions[currentQuestion];
+   let matchedAnswer=null;
+
+   q.answers.forEach(a=>{
+     if(spoken.includes(a)) matchedAnswer=a;
+   });
+
+   if(matchedAnswer){
+     answer(matchedAnswer);
+   }else{
+     document.getElementById("feedback").textContent="I didn't understand. Please try again.";
+     speak("I didn't understand. Please try again.");
+   }
+ };
+}
+
+function speak(text){
+ if(!("speechSynthesis" in window)) return;
+ const utterance=new SpeechSynthesisUtterance(text);
+ utterance.lang="en-IN";
+ utterance.rate=0.9;
+ window.speechSynthesis.speak(utterance);
+}
+
+startGame();
+</script>
+
+<script>
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("/static/sw.js");
+}
+</script>
+</body>
+</html>

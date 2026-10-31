@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ask Smriti — Manova</title>
+<style>
+  :root {
+    --navy: #17356e;
+    --navy-d: #0f2550;
+    --head: #17356e;
+    --accent: #1f5fa8;
+    --on-accent: #ffffff;
+    --press: #144a85;
+    --saffron: #ff9933;
+    --green: #138808;
+    --bg: #f3f5f9;
+    --card: #ffffff;
+    --soft: #eef3fb;
+    --line: #c9d3e3;
+    --ink: #1b2430;
+    --muted: #4a5568;
+    --danger: #b3261e;
+    --listen: #c2410c;
+    --you-bg: #fdf1e3;
+    --bot-bg: #e8f4ea;
+  }
+  body.hc {
+    --navy: #000000;
+    --navy-d: #000000;
+    --head: #ffd400;
+    --accent: #ffd400;
+    --on-accent: #000000;
+    --press: #8a7300;
+    --bg: #000000;
+    --card: #000000;
+    --soft: #111111;
+    --line: #ffd400;
+    --ink: #ffffff;
+    --muted: #f0f0f0;
+    --danger: #ff8a80;
+    --listen: #ffd400;
+    --you-bg: #111111;
+    --bot-bg: #111111;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 17px; }
+  body {
+    font-family: "Segoe UI", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Nirmala UI", Mukta, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  :focus-visible { outline: 3px solid #ffbf47; outline-offset: 2px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip {
+    position: absolute; left: -999px; top: 0; z-index: 99;
+    background: #fff; color: var(--navy); padding: 10px 14px; font-weight: 700;
+  }
+  .skip:focus { left: 8px; top: 8px; }
+
+  /* Tricolour strip */
+  .tricolor { display: flex; height: 6px; }
+  .tricolor i { flex: 1; display: block; }
+  .tricolor i:nth-child(1) { background: #ff9933; }
+  .tricolor i:nth-child(2) { background: #ffffff; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; }
+  .tricolor i:nth-child(3) { background: #138808; }
+
+  /* Utility bar */
+  .utility { background: #eef1f6; border-bottom: 1px solid var(--line); color: #1b2430; }
+  body.hc .utility { background: #000; color: #fff; }
+  .util-in { display: flex; justify-content: flex-end; align-items: center; gap: 14px; flex-wrap: wrap; padding: 6px 16px; }
+  .util-grp { display: flex; align-items: center; gap: 6px; }
+  .u-label { font-size: 0.85rem; font-weight: 600; }
+  .u-label::after { content: ":"; }
+  .u-btn {
+    min-height: 40px; min-width: 40px; padding: 2px 12px;
+    border: 1px solid var(--navy); background: #fff; color: var(--navy);
+    font-weight: 700; border-radius: 3px; cursor: pointer; font-size: 0.95rem;
+  }
+  body.hc .u-btn { border-color: #ffd400; background: #000; color: #ffd400; }
+  .u-btn[aria-pressed="true"] { background: var(--navy); color: #fff; }
+  body.hc .u-btn[aria-pressed="true"] { background: #ffd400; color: #000; }
+
+  /* Header */
+  .site-header { background: var(--navy); color: #fff; padding: 14px 0; border-bottom: 4px solid var(--saffron); }
+  body.hc .site-header { border-bottom-color: #ffd400; }
+  .head-in { display: flex; align-items: center; gap: 14px; }
+  .logo svg { width: 54px; height: 54px; display: block; }
+  .brand { font-size: 0.75rem; letter-spacing: 0.16em; color: #ffcf99; font-weight: 700; }
+  body.hc .brand { color: #ffd400; }
+  .site-header h1 { font-size: 1.6rem; line-height: 1.2; }
+  .site-header p { font-size: 0.95rem; color: #dbe6f7; }
+  body.hc .site-header p { color: #fff; }
+
+  /* Breadcrumb */
+  .crumbs { background: var(--card); border-bottom: 1px solid var(--line); font-size: 0.9rem; padding: 8px 0; }
+  .crumbs a { color: var(--accent); font-weight: 600; }
+  body.hc .crumbs a { color: #ffd400; }
+  .crumbs .sep { margin: 0 6px; color: var(--muted); }
+
+  /* Layout */
+  main { padding-top: 18px; padding-bottom: 28px; flex: 1; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; }
+  .card-title {
+    font-size: 1.1rem; color: var(--head); line-height: 1.3;
+    border-left: 5px solid var(--saffron); padding-left: 10px; margin-bottom: 4px;
+  }
+  .card-sub { font-size: 0.92rem; color: var(--muted); margin: 0 0 12px 15px; }
+  .card-title + *:not(.card-sub) { margin-top: 10px; }
+  @media (min-width: 900px) {
+    .grid { display: grid; grid-template-columns: 5fr 7fr; gap: 18px; align-items: start; }
+  }
+
+  .perm-banner {
+    display: none; background: #fff3e0; border: 1px solid #f0c78a; color: #7a4e12;
+    border-radius: 6px; padding: 12px 14px; margin-bottom: 16px; text-align: center;
+  }
+  .perm-banner.show { display: block; }
+
+  /* Voice card */
+  .status {
+    background: var(--soft); border: 1px solid var(--line); border-radius: 4px;
+    padding: 12px; text-align: center; font-weight: 600; color: var(--head);
+    min-height: 56px; display: flex; align-items: center; justify-content: center;
+  }
+  .status.listening { color: var(--listen); }
+  .status.error { color: var(--danger); }
+  .mic-wrap { display: flex; justify-content: center; padding: 18px 0 14px; }
+  .mic {
+    width: 132px; height: 132px; border-radius: 50%; border: none;
+    background: var(--accent); color: var(--on-accent); cursor: pointer;
+    box-shadow: 0 7px 0 var(--press);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mic svg { width: 56px; height: 56px; }
+  .mic:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--press); }
+  .mic.on { background: var(--listen); color: #fff; animation: pulse 1.4s ease-out infinite; }
+  body.hc .mic.on { color: #000; }
+  .mic:disabled { opacity: 0.5; cursor: not-allowed; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(194, 65, 12, 0.5); }
+    70% { box-shadow: 0 0 0 26px rgba(194, 65, 12, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(194, 65, 12, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+  .switch-row {
+    display: flex; align-items: center; gap: 12px; justify-content: center;
+    padding: 12px 14px; border: 1px solid var(--line); border-radius: 4px;
+    font-weight: 600; cursor: pointer; color: var(--head);
+  }
+  .switch-row input { width: 26px; height: 26px; accent-color: var(--accent); cursor: pointer; }
+  .hint { font-size: 0.92rem; color: var(--muted); text-align: center; margin-top: 10px; }
+
+  /* Language */
+  .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lang-btn {
+    min-height: 54px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    border: 2px solid var(--accent); background: var(--card); color: var(--head); border-radius: 4px;
+  }
+  .lang-btn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+
+  /* Conversation */
+  .transcript {
+    border: 1px solid var(--line); border-radius: 4px; padding: 12px;
+    min-height: 200px; max-height: 360px; overflow-y: auto; background: var(--card);
+  }
+  .placeholder { color: var(--muted); font-style: italic; }
+  .turn { margin-bottom: 14px; }
+  .msg { padding: 8px 12px; border-radius: 4px; margin-bottom: 6px; font-size: 1.02rem; }
+  .msg.you { background: var(--you-bg); border-left: 4px solid var(--saffron); }
+  .msg.bot { background: var(--bot-bg); border-left: 4px solid var(--green); }
+  body.hc .msg { border: 1px solid #ffd400; }
+  .who { display: block; font-weight: 700; font-size: 0.82rem; margin-bottom: 2px; color: var(--head); text-transform: uppercase; letter-spacing: 0.04em; }
+  .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .act-btn {
+    display: inline-flex; align-items: center; min-height: 46px; padding: 0 16px;
+    border-radius: 4px; text-decoration: none; font-weight: 700;
+    background: var(--accent); color: var(--on-accent);
+  }
+  .act-btn.danger { background: var(--danger); color: #fff; }
+  body.hc .act-btn.danger { color: #000; }
+  .type-row { display: flex; gap: 10px; margin-top: 12px; }
+  .type-row input {
+    flex: 1; min-height: 50px; font-size: 1.05rem; padding: 0 14px;
+    border: 2px solid var(--line); border-radius: 4px; background: var(--card); color: var(--ink);
+  }
+  .btn {
+    min-height: 50px; padding: 0 22px; border: none; border-radius: 4px; cursor: pointer;
+    background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 1.05rem;
+  }
+
+  /* Quick questions */
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    min-height: 46px; padding: 0 16px; border: 1px solid var(--accent); background: var(--card);
+    color: var(--head); border-radius: 24px; font-weight: 600; cursor: pointer; font-size: 1rem;
+  }
+  .chip:hover { background: var(--soft); }
+
+  /* FAQ accordion */
+  .faq-cat {
+    font-size: 1rem; font-weight: 700; color: var(--head);
+    margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--saffron);
+  }
+  details { border: 1px solid var(--line); border-radius: 4px; margin-bottom: 8px; background: var(--card); }
+  summary {
+    list-style: none; cursor: pointer; padding: 13px 14px 13px 40px;
+    font-weight: 600; position: relative; min-height: 48px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "\25B8"; position: absolute; left: 14px; transition: transform 0.15s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details[open] summary { border-bottom: 1px solid var(--line); }
+  .faq-body { padding: 12px 14px 14px 40px; }
+  .faq-body p { margin-bottom: 10px; }
+  .listen-btn {
+    min-height: 44px; padding: 0 16px; border-radius: 4px; cursor: pointer;
+    border: 2px solid var(--accent); background: var(--card); color: var(--head); font-weight: 700; font-size: 0.98rem;
+    margin-right: 8px;
+  }
+
+  .back {
+    display: block; text-align: center; padding: 16px; margin-top: 4px;
+    background: var(--accent); color: var(--on-accent); font-weight: 700;
+    border-radius: 4px; text-decoration: none; font-size: 1.1rem;
+  }
+
+  /* Footer */
+  .site-footer { background: var(--navy); color: #fff; padding: 16px 0 18px; font-size: 0.9rem; border-top: 4px solid var(--saffron); }
+  body.hc .site-footer { border-top-color: #ffd400; }
+  .site-footer .emerg { font-weight: 700; color: #ffd9ae; margin-bottom: 6px; }
+  body.hc .site-footer .emerg { color: #ffd400; }
+  .site-footer .disc { color: #c9d7ee; font-size: 0.85rem; }
+  body.hc .site-footer .disc { color: #fff; }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main" data-i="skip">Skip to main content</a>
+<div class="tricolor" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div class="utility">
+  <div class="util-in">
+    <div class="util-grp" id="sizeGrp" role="group">
+      <span class="u-label" data-i="textSize">Text size</span>
+      <button class="u-btn" id="fsDown" type="button" aria-label="Decrease text size">A-</button>
+      <button class="u-btn" id="fsReset" type="button" aria-label="Normal text size">A</button>
+      <button class="u-btn" id="fsUp" type="button" aria-label="Increase text size">A+</button>
+    </div>
+    <div class="util-grp">
+      <button class="u-btn" id="hcBtn" type="button" aria-pressed="false" data-i="contrast">High contrast</button>
+    </div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="wrap head-in">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="23" fill="#fff"/>
+        <rect x="19" y="9" width="10" height="19" rx="5" fill="#17356e"/>
+        <path d="M13.5 24a10.5 10.5 0 0 0 21 0" fill="none" stroke="#17356e" stroke-width="3" stroke-linecap="round"/>
+        <path d="M24 34.5V40M18 40h12" stroke="#17356e" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="titles">
+      <div class="brand">MANOVA</div>
+      <h1 data-i="siteTitle">Ask Smriti</h1>
+      <p data-i="siteSub">Voice Assistant</p>
+    </div>
+  </div>
+</header>
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <div class="wrap"><a href="home.html" data-i="crumbHome">Home</a><span class="sep">&rsaquo;</span><span data-i="crumbHere">Ask Smriti</span></div>
+</nav>
+
+<main id="main" class="wrap">
+  <div class="perm-banner" id="permBanner" role="alert" data-i="micNeeded"></div>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card" aria-labelledby="h-voice">
+        <h2 class="card-title" id="h-voice" data-i="voiceTitle">Voice assistant</h2>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div class="mic-wrap">
+          <button class="mic" id="micBtn" type="button" aria-pressed="false">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <rect x="17" y="6" width="14" height="24" rx="7" fill="currentColor"/>
+              <path d="M10 23a14 14 0 0 0 28 0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M24 37v6M16 43h16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <label class="switch-row"><input type="checkbox" id="wakeToggle" /><span data-i="wake"></span></label>
+        <p class="hint" data-i="hint"></p>
+      </section>
+
+      <section class="card" aria-labelledby="h-lang">
+        <h2 class="card-title" id="h-lang" data-i="langTitle">Select language</h2>
+        <div class="lang-grid" id="langGrid"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card" aria-labelledby="h-conv">
+        <h2 class="card-title" id="h-conv" data-i="convTitle">Conversation</h2>
+        <div class="transcript" id="transcript" role="log" aria-live="polite">
+          <p class="placeholder" data-i="placeholder"></p>
+        </div>
+        <form class="type-row" id="typeForm">
+          <label class="sr-only" for="typeInput" data-i="typePh"></label>
+          <input type="text" id="typeInput" autocomplete="off" />
+          <button class="btn" type="submit" data-i="ask"></button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="h-quick">
+        <h2 class="card-title" id="h-quick" data-i="quickTitle">Quick questions</h2>
+        <p class="card-sub" data-i="quickSub"></p>
+        <div class="chips" id="chips"></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card" aria-labelledby="h-faq">
+    <h2 class="card-title" id="h-faq" data-i="faqTitle">Frequently asked questions</h2>
+    <p class="card-sub" data-i="faqSub"></p>
+    <div id="faqList"></div>
+  </section>
+
+  <a class="back" href="home.html" data-i="back">&larr; Back to Home</a>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="emerg" data-i="emergencyLine"></div>
+    <div class="disc" data-i="disclaimer"></div>
+  </div>
+</footer>
+<div class="tricolor" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<script>
+/*DATA-START*/
+// Where the action buttons under Smriti's replies should take the user.
+// Change these to the real page names once your other screens exist.
+const PAGES = { home: "home.html", map: "home.html", family: "home.html", games: "home.html" };
+
+const LANGS = {
+  en: { native: "English", stt: "en-IN", locale: "en-IN", voices: ["en-IN", "en-GB", "en"],
+        wake: ["hello smriti", "hey smriti", "ok smriti", "hi smriti"] },
+  hi: { native: "हिंदी", stt: "hi-IN", locale: "hi-IN", voices: ["hi-IN", "hi"],
+        wake: ["हेलो स्मृति", "हैलो स्मृति", "नमस्ते स्मृति", "स्मृति"] },
+  as: { native: "অসমীয়া", stt: "as-IN", locale: "as-IN", voices: ["as-IN", "bn-IN", "bn-BD", "bn"],
+        wake: ["হেলো স্মৃতি", "হ্যালো স্মৃতি", "নমস্কাৰ স্মৃতি", "স্মৃতি"] },
+  bn: { native: "বাংলা", stt: "bn-IN", locale: "bn-IN", voices: ["bn-IN", "bn-BD", "bn"],
+        wake: ["হ্যালো স্মৃতি", "হেলো স্মৃতি", "নমস্কার স্মৃতি", "স্মৃতি"] }
+};
+
+const UI = {
+  en: {
+    skip: "Skip to main content", textSize: "Text size", contrast: "High contrast",
+    siteTitle: "Ask Smriti", siteSub: "Voice Assistant · Memory Care & Safety",
+    crumbHome: "Home", crumbHere: "Ask Smriti", langTitle: "Select language", voiceTitle: "Voice assistant",
+    tapMic: "Tap the microphone to speak", listening: "Listening…", speaking: "Speaking…",
+    wake: "Listen for “Hello Smriti”", wakeSay: "Say “Hello Smriti”", wakeAck: "Yes, I'm listening.",
+    hint: "Turn on the switch and say “Hello Smriti”, or just tap the microphone.",
+    convTitle: "Conversation", placeholder: "Your conversation will appear here…",
+    typePh: "Or type your question here", ask: "Ask",
+    quickTitle: "Quick questions", quickSub: "Tap a question to hear the answer.",
+    faqTitle: "Frequently asked questions", faqSub: "Tap a question to read the answer. Use the speaker button to listen.",
+    listen: "🔊 Listen", you: "You", bot: "Smriti", back: "← Back to Home",
+    micNeeded: "Microphone access is needed. Please allow it when the browser asks.",
+    allowMic: "Please allow microphone access",
+    useChrome: "Voice input needs the Chrome browser. You can still type or tap a question.",
+    langNoStt: "Voice input is not available for this language on this device. Please type or tap a question.",
+    noVoice: "Spoken replies are not available for this language on this device. Answers are shown as text.",
+    askAgain: "Please ask me again.", noSpeech: "I did not hear anything. Please try again.",
+    retry: "Please try again",
+    call112: "📞 Call 112", call108: "🚑 Call 108", openFamily: "👪 Open Family Control",
+    openMap: "📍 Open map", openGames: "🎮 Open games",
+    emergencyLine: "Emergency: 112 · Ambulance: 108 · Senior Citizen Helpline: 14567",
+    disclaimer: "Prototype built for Smart India Hackathon 2026 by Team Nexus Prime. This is not an official government website.",
+    cats: { safety: "Safety & Emergency", health: "Health & Wellbeing", daily: "Everyday", app: "Using this app" },
+    fallback: "I did not understand that. You can ask about the time, date, location, medicine, games, or say “call my family”."
+  },
+  hi: {
+    skip: "मुख्य सामग्री पर जाएं", textSize: "अक्षर आकार", contrast: "हाई कंट्रास्ट",
+    siteTitle: "स्मृति से पूछें", siteSub: "आवाज़ सहायक · स्मृति-देखभाल और सुरक्षा",
+    crumbHome: "होम", crumbHere: "स्मृति से पूछें", langTitle: "भाषा चुनें", voiceTitle: "आवाज़ सहायक",
+    tapMic: "बोलने के लिए माइक्रोफ़ोन दबाएं", listening: "सुन रही हूं…", speaking: "बोल रही हूं…",
+    wake: "“हेलो स्मृति” सुनें", wakeSay: "“हेलो स्मृति” बोलें", wakeAck: "जी हां, मैं सुन रही हूं।",
+    hint: "स्विच चालू करके “हेलो स्मृति” बोलें, या माइक्रोफ़ोन दबाएं।",
+    convTitle: "बातचीत", placeholder: "आपकी बातचीत यहां दिखेगी…",
+    typePh: "या यहां अपना सवाल लिखें", ask: "पूछें",
+    quickTitle: "त्वरित प्रश्न", quickSub: "जवाब सुनने के लिए कोई प्रश्न दबाएं।",
+    faqTitle: "अक्सर पूछे जाने वाले प्रश्न", faqSub: "जवाब पढ़ने के लिए प्रश्न दबाएं। सुनने के लिए स्पीकर बटन दबाएं।",
+    listen: "🔊 सुनें", you: "आप", bot: "स्मृति", back: "← होम पर वापस जाएं",
+    micNeeded: "माइक्रोफ़ोन की अनुमति चाहिए। ब्राउज़र पूछे तो अनुमति दें।",
+    allowMic: "कृपया माइक्रोफ़ोन की अनुमति दें",
+    useChrome: "आवाज़ से बोलने के लिए Chrome ब्राउज़र चाहिए। आप लिख सकते हैं या प्रश्न दबा सकते हैं।",
+    langNoStt: "इस डिवाइस पर इस भाषा में आवाज़ इनपुट उपलब्ध नहीं है। कृपया लिखें या प्रश्न दबाएं।",
+    noVoice: "इस डिवाइस पर इस भाषा में बोलकर जवाब उपलब्ध नहीं है। जवाब लिखकर दिखाए जा रहे हैं।",
+    askAgain: "कृपया मुझसे दोबारा पूछिए।", noSpeech: "मुझे कुछ सुनाई नहीं दिया। कृपया फिर कोशिश करें।",
+    retry: "कृपया फिर कोशिश करें",
+    call112: "📞 112 पर कॉल करें", call108: "🚑 108 पर कॉल करें", openFamily: "👪 फैमिली कंट्रोल खोलें",
+    openMap: "📍 नक्शा खोलें", openGames: "🎮 खेल खोलें",
+    emergencyLine: "आपातकाल: 112 · एम्बुलेंस: 108 · वरिष्ठ नागरिक हेल्पलाइन: 14567",
+    disclaimer: "यह स्मार्ट इंडिया हैकाथॉन 2026 के लिए टीम नेक्सस प्राइम द्वारा बनाया गया प्रोटोटाइप है। यह कोई सरकारी वेबसाइट नहीं है।",
+    cats: { safety: "सुरक्षा और आपातकाल", health: "स्वास्थ्य और कल्याण", daily: "रोज़मर्रा", app: "ऐप का उपयोग" },
+    fallback: "मुझे ठीक से समझ नहीं आया। आप समय, तारीख, लोकेशन, दवा, खेल के बारे में पूछ सकते हैं, या “परिवार को बुलाओ” कह सकते हैं।"
+  },
+  as: {
+    skip: "মুখ্য বিষয়বস্তুলৈ যাওক", textSize: "আখৰৰ আকাৰ", contrast: "হাই কন্ট্ৰাষ্ট",
+    siteTitle: "স্মৃতিক সোধক", siteSub: "কণ্ঠ সহায়ক · স্মৃতি-যত্ন আৰু সুৰক্ষা",
+    crumbHome: "হোম", crumbHere: "স্মৃতিক সোধক", langTitle: "ভাষা বাছনি কৰক", voiceTitle: "কণ্ঠ সহায়ক",
+    tapMic: "কথা ক'বলৈ মাইক্ৰফোনত টিপক", listening: "শুনি আছোঁ…", speaking: "কৈ আছোঁ…",
+    wake: "“হেলো স্মৃতি” শুনক", wakeSay: "“হেলো স্মৃতি” কওক", wakeAck: "হয়, মই শুনি আছোঁ।",
+    hint: "সুইচ চলু কৰি “হেলো স্মৃতি” কওক, বা মাইক্ৰফোনত টিপক।",
+    convTitle: "কথোপকথন", placeholder: "আপোনাৰ কথোপকথন ইয়াত দেখা যাব…",
+    typePh: "বা ইয়াত আপোনাৰ প্ৰশ্ন লিখক", ask: "সোধক",
+    quickTitle: "দ্ৰুত প্ৰশ্ন", quickSub: "উত্তৰ শুনিবলৈ এটা প্ৰশ্নত টিপক।",
+    faqTitle: "সঘনাই সোধা প্ৰশ্ন", faqSub: "উত্তৰ পঢ়িবলৈ প্ৰশ্নত টিপক। শুনিবলৈ স্পীকাৰ বুটাম ব্যৱহাৰ কৰক।",
+    listen: "🔊 শুনক", you: "আপুনি", bot: "স্মৃতি", back: "← হোমলৈ উভতি যাওক",
+    micNeeded: "মাইক্ৰফোনৰ অনুমতি লাগে। ব্ৰাউজাৰে সোধাৰ সময়ত অনুমতি দিয়ক।",
+    allowMic: "অনুগ্ৰহ কৰি মাইক্ৰফোনৰ অনুমতি দিয়ক",
+    useChrome: "কণ্ঠ ইনপুটৰ বাবে Chrome ব্ৰাউজাৰ লাগে। আপুনি লিখিব বা প্ৰশ্নত টিপিব পাৰে।",
+    langNoStt: "এই ডিভাইচত এই ভাষাৰ বাবে কণ্ঠ ইনপুট উপলব্ধ নহয়। অনুগ্ৰহ কৰি লিখক বা প্ৰশ্নত টিপক।",
+    noVoice: "এই ডিভাইচত এই ভাষাত কথিত উত্তৰ উপলব্ধ নহয়। উত্তৰবোৰ লিখিতভাৱে দেখুওৱা হৈছে।",
+    askAgain: "অনুগ্ৰহ কৰি মোক আকৌ সোধক।", noSpeech: "মই একো শুনা নাপালোঁ। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।",
+    retry: "অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক",
+    call112: "📞 112 ত ফোন কৰক", call108: "🚑 108 ত ফোন কৰক", openFamily: "👪 ফেমিলী কন্ট্ৰ'ল খোলক",
+    openMap: "📍 মানচিত্ৰ খোলক", openGames: "🎮 খেল খোলক",
+    emergencyLine: "জৰুৰীকালীন: 112 · এম্বুলেন্স: 108 · জ্যেষ্ঠ নাগৰিক হেল্পলাইন: 14567",
+    disclaimer: "এইটো স্মাৰ্ট ইণ্ডিয়া হাকাথন ২০২৬ৰ বাবে টিম নেক্সাছ প্ৰাইমে বনোৱা প্ৰটোটাইপ। ই কোনো চৰকাৰী ৱেবছাইট নহয়।",
+    cats: { safety: "সুৰক্ষা আৰু জৰুৰীকালীন", health: "স্বাস্থ্য আৰু কল্যাণ", daily: "দৈনন্দিন", app: "এপটো ব্যৱহাৰ" },
+    fallback: "মই ভালকৈ বুজি নাপালোঁ। আপুনি সময়, তাৰিখ, অৱস্থান, দৰৱ, খেলৰ বিষয়ে সুধিব পাৰে, বা “পৰিয়ালক ফোন কৰা” ক'ব পাৰে।"
+  },
+  bn: {
+    skip: "মূল বিষয়বস্তুতে যান", textSize: "অক্ষরের আকার", contrast: "হাই কনট্রাস্ট",
+    siteTitle: "স্মৃতিকে জিজ্ঞাসা করুন", siteSub: "ভয়েস সহায়ক · স্মৃতি-যত্ন ও নিরাপত্তা",
+    crumbHome: "হোম", crumbHere: "স্মৃতিকে জিজ্ঞাসা করুন", langTitle: "ভাষা নির্বাচন করুন", voiceTitle: "ভয়েস সহায়ক",
+    tapMic: "কথা বলতে মাইক্রোফোনে চাপুন", listening: "শুনছি…", speaking: "বলছি…",
+    wake: "“হ্যালো স্মৃতি” শুনুন", wakeSay: "“হ্যালো স্মৃতি” বলুন", wakeAck: "হ্যাঁ, আমি শুনছি।",
+    hint: "সুইচ চালু করে “হ্যালো স্মৃতি” বলুন, অথবা মাইক্রোফোনে চাপুন।",
+    convTitle: "কথোপকথন", placeholder: "আপনার কথোপকথন এখানে দেখা যাবে…",
+    typePh: "অথবা এখানে আপনার প্রশ্ন লিখুন", ask: "জিজ্ঞাসা",
+    quickTitle: "দ্রুত প্রশ্ন", quickSub: "উত্তর শুনতে একটি প্রশ্নে চাপুন।",
+    faqTitle: "সচরাচর জিজ্ঞাসিত প্রশ্ন", faqSub: "উত্তর পড়তে প্রশ্নে চাপুন। শুনতে স্পিকার বোতাম ব্যবহার করুন।",
+    listen: "🔊 শুনুন", you: "আপনি", bot: "স্মৃতি", back: "← হোমে ফিরে যান",
+    micNeeded: "মাইক্রোফোনের অনুমতি প্রয়োজন। ব্রাউজার জিজ্ঞাসা করলে অনুমতি দিন।",
+    allowMic: "দয়া করে মাইক্রোফোনের অনুমতি দিন",
+    useChrome: "ভয়েস ইনপুটের জন্য Chrome ব্রাউজার প্রয়োজন। আপনি লিখতে বা প্রশ্নে চাপতে পারেন।",
+    langNoStt: "এই ডিভাইসে এই ভাষার জন্য ভয়েস ইনপুট উপলব্ধ নয়। দয়া করে লিখুন বা প্রশ্নে চাপুন।",
+    noVoice: "এই ডিভাইসে এই ভাষায় কথিত উত্তর উপলব্ধ নয়। উত্তর লেখা আকারে দেখানো হচ্ছে।",
+    askAgain: "দয়া করে আমাকে আবার জিজ্ঞাসা করুন।", noSpeech: "আমি কিছু শুনতে পাইনি। দয়া করে আবার চেষ্টা করুন।",
+    retry: "দয়া করে আবার চেষ্টা করুন",
+    call112: "📞 112 নম্বরে ফোন করুন", call108: "🚑 108 নম্বরে ফোন করুন", openFamily: "👪 ফ্যামিলি কন্ট্রোল খুলুন",
+    openMap: "📍 ম্যাপ খুলুন", openGames: "🎮 খেলা খুলুন",
+    emergencyLine: "জরুরি: 112 · অ্যাম্বুলেন্স: 108 · প্রবীণ নাগরিক হেল্পলাইন: 14567",
+    disclaimer: "এটি স্মার্ট ইন্ডিয়া হ্যাকাথন ২০২৬-এর জন্য টিম নেক্সাস প্রাইমের তৈরি প্রোটোটাইপ। এটি কোনো সরকারি ওয়েবসাইট নয়।",
+    cats: { safety: "নিরাপত্তা ও জরুরি", health: "স্বাস্থ্য ও সুস্থতা", daily: "দৈনন্দিন", app: "অ্যাপ ব্যবহার" },
+    fallback: "আমি ঠিক বুঝতে পারিনি। আপনি সময়, তারিখ, অবস্থান, ওষুধ, খেলা সম্পর্কে জিজ্ঞাসা করতে পারেন, অথবা “পরিবারকে ফোন করো” বলতে পারেন।"
+  }
+};
+
+// Buttons shown under a reply. [uiKey, link, isDanger]
+const ACTIONS = {
+  emergency: [["call112", "tel:112", true], ["call108", "tel:108", true]],
+  sos: [["call112", "tel:112", true], ["openFamily", PAGES.family, false]],
+  family: [["openFamily", PAGES.family, false]],
+  map: [["openMap", PAGES.map, false]],
+  games: [["openGames", PAGES.games, false]]
+};
+
+const CATS = ["safety", "health", "daily", "app"];
+const QUICK = ["time", "date", "location", "medicine", "water", "emergency", "game", "family"];
+
+// Each entry: en / hi / as / bn each with q (question shown), k (keywords), a (answer).
+// {time} {date} {last} are filled in at answer time.
+const FAQS = [
+  // ---------------- hidden conversational entries ----------------
+  { id: "greet", cat: "hide",
+    en: { k: ["hi", "hello", "hey", "namaste", "good morning", "good afternoon", "good evening"], a: "Hello! How may I help you today?" },
+    hi: { k: ["नमस्ते", "हैलो", "हेलो", "सुप्रभात", "नमस्कार"], a: "नमस्ते! मैं आपकी क्या मदद कर सकती हूं?" },
+    as: { k: ["নমস্কাৰ", "হেলো", "হাই", "শুভ পুৱা", "শুভ দুপৰীয়া", "শুভ সন্ধিয়া"], a: "নমস্কাৰ! মই আপোনাক কেনেকৈ সহায় কৰিব পাৰোঁ?" },
+    bn: { k: ["নমস্কার", "হ্যালো", "হেলো", "হাই", "সুপ্রভাত", "শুভ সকাল"], a: "নমস্কার! আমি আপনাকে কীভাবে সাহায্য করতে পারি?" } },
+  { id: "howareyou", cat: "hide",
+    en: { k: ["how are you", "how are you doing"], a: "I'm doing well, thank you for asking! How are you feeling?" },
+    hi: { k: ["आप कैसे हैं", "आप कैसी हैं", "कैसी हो", "कैसे हो"], a: "मैं ठीक हूं, पूछने के लिए धन्यवाद! आप कैसा महसूस कर रहे हैं?" },
+    as: { k: ["আপুনি কেনে আছে", "কেনে আছা", "কেনে আছে"], a: "মই ভাল আছোঁ, সুধিলে ধন্যবাদ! আপুনি কেনে অনুভৱ কৰিছে?" },
+    bn: { k: ["আপনি কেমন আছেন", "কেমন আছো", "কেমন আছেন"], a: "আমি ভালো আছি, জিজ্ঞাসা করার জন্য ধন্যবাদ! আপনি কেমন বোধ করছেন?" } },
+  { id: "bye", cat: "hide",
+    en: { k: ["good night", "bye", "goodbye", "see you"], a: "Good night! Take care. I'll be here whenever you need me." },
+    hi: { k: ["शुभ रात्रि", "शुभरात्रि", "अलविदा", "बाय", "टाटा"], a: "शुभ रात्रि! अपना ख्याल रखिए। जब भी ज़रूरत हो, मैं यहीं हूं।" },
+    as: { k: ["শুভ ৰাত্ৰি", "শুভৰাত্ৰি", "বিদায়", "বাই"], a: "শুভ ৰাত্ৰি! নিজৰ যত্ন লব। যেতিয়াই প্ৰয়োজন হয়, মই ইয়াতে আছোঁ।" },
+    bn: { k: ["শুভ রাত্রি", "শুভরাত্রি", "বিদায়", "বাই"], a: "শুভ রাত্রি! নিজের যত্ন নেবেন। যখনই দরকার, আমি এখানেই আছি।" } },
+  { id: "thanks", cat: "hide",
+    en: { k: ["thank you", "thanks"], a: "You're most welcome!" },
+    hi: { k: ["धन्यवाद", "शुक्रिया", "थैंक यू"], a: "आपका स्वागत है!" },
+    as: { k: ["ধন্যবাদ", "বহুত ধন্যবাদ"], a: "আপোনাক স্বাগতম!" },
+    bn: { k: ["ধন্যবাদ", "অনেক ধন্যবাদ"], a: "আপনাকে স্বাগতম!" } },
+  { id: "repeat", cat: "hide",
+    en: { k: ["repeat", "say again", "come again", "say that again", "pardon"], a: "{last}" },
+    hi: { k: ["दोबारा", "फिर से बोलो", "फिर से", "दोहराओ"], a: "{last}" },
+    as: { k: ["আকৌ কওক", "আকৌ কোৱা", "পুনৰ", "আকৌ এবাৰ"], a: "{last}" },
+    bn: { k: ["আবার বলো", "আবার বলুন", "আবার", "পুনরায়"], a: "{last}" } },
+
+  // ---------------- Safety & Emergency ----------------
+  { id: "emergency", cat: "safety", act: "emergency",
+    en: { q: "I need emergency help", k: ["help me", "emergency", "sos", "chest pain", "cant breathe", "i fell", "fell down"],
+          a: "Please stay calm. Tap the red button below to call 112 for emergency help, or 108 for an ambulance. I cannot place calls by myself yet." },
+    hi: { q: "मुझे तुरंत मदद चाहिए", k: ["मदद करो", "मदद चाहिए", "बचाओ", "एसओएस", "sos", "आपातकाल", "इमरजेंसी", "गिर गया", "गिर गई", "सांस नहीं", "सीने में दर्द"],
+          a: "शांत रहिए। आपातकालीन मदद के लिए नीचे का लाल बटन दबाकर 112 पर कॉल कीजिए, या एम्बुलेंस के लिए 108। मैं अभी खुद कॉल नहीं कर सकती।" },
+    as: { q: "মোক জৰুৰী সহায় লাগে", k: ["সহায় কৰক", "সহায় লাগে", "বচাওক", "জৰুৰী", "ইমাৰজেন্সী", "sos", "পৰি গ", "উশাহ নাই", "বুকুত বিষ"],
+          a: "শান্ত হওক। জৰুৰী সহায়ৰ বাবে তলৰ ৰঙা বুটামটো টিপি 112 ত ফোন কৰক, বা এম্বুলেন্সৰ বাবে 108। মই এতিয়া নিজে ফোন কৰিব নোৱাৰোঁ।" },
+    bn: { q: "আমার জরুরি সাহায্য দরকার", k: ["সাহায্য করুন", "সাহায্য দরকার", "বাঁচান", "জরুরি", "ইমার্জেন্সি", "sos", "পড়ে গেছি", "শ্বাস নিতে পারছি না", "বুকে ব্যথা"],
+          a: "শান্ত থাকুন। জরুরি সাহায্যের জন্য নিচের লাল বোতাম চেপে 112 নম্বরে ফোন করুন, অথবা অ্যাম্বুলেন্সের জন্য 108। আমি এখনও নিজে ফোন করতে পারি না।" } },
+  { id: "numbers", cat: "safety",
+    en: { q: "What are the emergency numbers?", k: ["emergency number", "emergency numbers", "ambulance number", "helpline", "police number", "phone numbers"],
+          a: "Emergency: 112. Ambulance: 108. Senior Citizen Helpline (Elderline): 14567." },
+    hi: { q: "आपातकालीन नंबर क्या हैं?", k: ["आपातकालीन नंबर", "इमरजेंसी नंबर", "एम्बुलेंस नंबर", "हेल्पलाइन", "पुलिस नंबर"],
+          a: "आपातकाल: 112। एम्बुलेंस: 108। वरिष्ठ नागरिक हेल्पलाइन: 14567।" },
+    as: { q: "জৰুৰীকালীন নম্বৰবোৰ কি?", k: ["জৰুৰীকালীন নম্বৰ", "ইমাৰজেন্সী নম্বৰ", "এম্বুলেন্স নম্বৰ", "হেল্পলাইন", "পুলিচ নম্বৰ"],
+          a: "জৰুৰীকালীন: 112। এম্বুলেন্স: 108। জ্যেষ্ঠ নাগৰিক হেল্পলাইন: 14567।" },
+    bn: { q: "জরুরি নম্বরগুলো কী?", k: ["জরুরি নম্বর", "ইমার্জেন্সি নম্বর", "অ্যাম্বুলেন্স নম্বর", "হেল্পলাইন", "পুলিশ নম্বর"],
+          a: "জরুরি: 112। অ্যাম্বুলেন্স: 108। প্রবীণ নাগরিক হেল্পলাইন: 14567।" } },
+  { id: "lost", cat: "safety", act: "sos",
+    en: { q: "I am lost", k: ["i am lost", "im lost", "lost my way", "cant find my way", "cant find home", "lost"],
+          a: "Please stay calm and stay where it is safe. Ask a person nearby to help you. You can call your family or emergency number 112 using the buttons below." },
+    hi: { q: "मैं रास्ता भूल गया हूं", k: ["रास्ता भूल", "घर नहीं मिल रहा", "खो गया", "खो गई"],
+          a: "घबराइए नहीं, जहां सुरक्षित हों वहीं रुकिए। पास के किसी व्यक्ति से मदद मांगिए। नीचे दिए बटन से परिवार को या 112 पर कॉल कर सकते हैं।" },
+    as: { q: "মই বাট হেৰুৱালোঁ", k: ["বাট হেৰুৱালো", "বাট হেৰাল", "বাট পোৱা নাই", "হেৰাই গৈছো", "ঘৰ বিচাৰি পোৱা নাই"],
+          a: "ভয় নকৰিব, য'ত নিৰাপদ তাতেই থাকক। ওচৰৰ কোনো মানুহক সহায় খুজক। তলৰ বুটামেৰে পৰিয়াল বা 112 ত ফোন কৰিব পাৰে।" },
+    bn: { q: "আমি পথ হারিয়ে ফেলেছি", k: ["পথ হারিয়ে", "রাস্তা হারিয়ে", "বাড়ি খুঁজে পাচ্ছি না", "হারিয়ে গেছি"],
+          a: "ভয় পাবেন না, যেখানে নিরাপদ সেখানেই থাকুন। কাছের কাউকে সাহায্য করতে বলুন। নিচের বোতাম দিয়ে পরিবারকে বা 112 নম্বরে ফোন করতে পারেন।" } },
+  { id: "location", cat: "safety", act: "map",
+    en: { q: "Where am I?", k: ["where am i", "my location", "location", "show map"],
+          a: "I can show your current location on the map. Tap the button below to open it." },
+    hi: { q: "मैं कहां हूं?", k: ["मैं कहां हूं", "लोकेशन", "मेरी जगह", "नक्शा"],
+          a: "मैं आपकी वर्तमान जगह नक्शे पर दिखा सकती हूं। नीचे दिए बटन को दबाइए।" },
+    as: { q: "মই ক'ত আছোঁ?", k: ["মই ক'ত আছোঁ", "মই কত আছো", "লোকেশ্যন", "মোৰ অৱস্থান", "মানচিত্ৰ"],
+          a: "মই আপোনাৰ বৰ্তমানৰ অৱস্থান মানচিত্ৰত দেখুৱাব পাৰোঁ। তলৰ বুটামটো টিপক।" },
+    bn: { q: "আমি কোথায় আছি?", k: ["আমি কোথায় আছি", "লোকেশন", "আমার অবস্থান", "ম্যাপ", "মানচিত্র"],
+          a: "আমি আপনার বর্তমান অবস্থান ম্যাপে দেখাতে পারি। নিচের বোতামটি চাপুন।" } },
+  { id: "family", cat: "safety", act: "family",
+    en: { q: "Call my family", k: ["call family", "call my family", "call my son", "call my daughter", "call my wife", "call my husband", "phone my family"],
+          a: "I cannot place calls by myself yet. Please open Family Control on the Home screen and tap the name of the person you want to call." },
+    hi: { q: "मेरे परिवार को फ़ोन करो", k: ["परिवार को बुलाओ", "परिवार को फोन", "परिवार को कॉल", "बेटे को फोन", "बेटी को फोन", "घर पर फोन"],
+          a: "मैं अभी खुद कॉल नहीं कर सकती। कृपया होम स्क्रीन पर 'फैमिली कंट्रोल' खोलिए और जिसे बुलाना है उसका नाम दबाइए।" },
+    as: { q: "মোৰ পৰিয়ালক ফোন কৰা", k: ["পৰিয়ালক ফোন", "পৰিয়ালক মাতা", "পুতেকক ফোন", "জীয়েকক ফোন", "ঘৰলৈ ফোন"],
+          a: "মই এতিয়া নিজে ফোন কৰিব নোৱাৰোঁ। অনুগ্ৰহ কৰি হোম স্ক্ৰীনত 'ফেমিলী কন্ট্ৰ'ল' খুলি যাক মাতিব বিচাৰে তেওঁৰ নামত টিপক।" },
+    bn: { q: "আমার পরিবারকে ফোন করো", k: ["পরিবারকে ফোন", "পরিবারকে ডাকো", "ছেলেকে ফোন", "মেয়েকে ফোন", "বাড়িতে ফোন"],
+          a: "আমি এখনও নিজে ফোন করতে পারি না। দয়া করে হোম স্ক্রিনে 'ফ্যামিলি কন্ট্রোল' খুলে যাকে ডাকতে চান তার নামে চাপুন।" } },
+  { id: "doctor", cat: "safety", act: "family",
+    en: { q: "I want to call my doctor", k: ["doctor", "call doctor", "hospital", "call my doctor"],
+          a: "Your doctor's contact is saved in Family Control. Please open it from the Home screen to make the call." },
+    hi: { q: "मुझे डॉक्टर को फ़ोन करना है", k: ["डॉक्टर", "डाक्टर", "अस्पताल", "वैद्य"],
+          a: "आपके डॉक्टर का नंबर फैमिली कंट्रोल में सेव है। कॉल करने के लिए होम स्क्रीन से उसे खोलिए।" },
+    as: { q: "মই ডাক্তৰক ফোন কৰিব বিচাৰো", k: ["ডাক্তৰ", "চিকিৎসক", "হাস্পতাল"],
+          a: "আপোনাৰ ডাক্তৰৰ নম্বৰ ফেমিলী কন্ট্ৰ'লত সংৰক্ষিত আছে। ফোন কৰিবলৈ হোম স্ক্ৰীনৰ পৰা খোলক।" },
+    bn: { q: "আমি ডাক্তারকে ফোন করতে চাই", k: ["ডাক্তার", "চিকিৎসক", "হাসপাতাল"],
+          a: "আপনার ডাক্তারের নম্বর ফ্যামিলি কন্ট্রোলে সেভ করা আছে। ফোন করতে হোম স্ক্রিন থেকে খুলুন।" } },
+  { id: "sos", cat: "safety",
+    en: { q: "What does the SOS button do?", k: ["sos button", "what is sos", "what does sos"],
+          a: "The SOS button on the Home screen has two choices: 'Lost My Way' and 'Emergency'. It alerts your family." },
+    hi: { q: "एसओएस बटन क्या करता है?", k: ["एसओएस बटन", "एसओएस क्या", "sos button"],
+          a: "होम स्क्रीन के एसओएस बटन में दो विकल्प हैं: 'रास्ता भूल गया' और 'आपातकाल'। यह आपके परिवार को सूचना भेजता है।" },
+    as: { q: "এছঅ'এছ বুটামে কি কৰে?", k: ["এছঅএছ বুটাম", "এছ অ এছ বুটাম", "এছ অ এছ কি", "sos button"],
+          a: "হোম স্ক্ৰীনৰ এছঅ'এছ বুটামত দুটা বিকল্প আছে: 'বাট হেৰুৱালোঁ' আৰু 'জৰুৰীকালীন'। ই আপোনাৰ পৰিয়ালক সতৰ্কবাণী পঠায়।" },
+    bn: { q: "এসওএস বোতাম কী করে?", k: ["এসওএস বোতাম", "এসওএস কী", "sos button"],
+          a: "হোম স্ক্রিনের এসওএস বোতামে দুটি বিকল্প আছে: 'পথ হারিয়েছি' এবং 'জরুরি'। এটি আপনার পরিবারকে সতর্কবার্তা পাঠায়।" } },
+  { id: "privacy", cat: "safety",
+    en: { q: "Who can see my location?", k: ["who can see my location", "privacy", "location sharing", "tracking"],
+          a: "Only the family members you have approved can see your location. You can turn location sharing on or off in your Profile." },
+    hi: { q: "मेरी लोकेशन कौन देख सकता है?", k: ["मेरी लोकेशन कौन", "गोपनीयता", "लोकेशन शेयर", "ट्रैकिंग"],
+          a: "केवल वही परिवारजन आपकी लोकेशन देख सकते हैं जिन्हें आपने अनुमति दी है। आप प्रोफ़ाइल में लोकेशन शेयरिंग चालू या बंद कर सकते हैं।" },
+    as: { q: "মোৰ অৱস্থান কোনে চাব পাৰে?", k: ["মোৰ অৱস্থান কোনে", "গোপনীয়তা", "অৱস্থান শ্বেয়াৰ", "ট্ৰেকিং"],
+          a: "আপুনি অনুমতি দিয়া পৰিয়ালৰ সদস্যসকলেহে আপোনাৰ অৱস্থান চাব পাৰে। আপুনি প্ৰ'ফাইলত অৱস্থান শ্বেয়াৰিং চালু বা বন্ধ কৰিব পাৰে।" },
+    bn: { q: "আমার অবস্থান কে দেখতে পারে?", k: ["আমার অবস্থান কে", "গোপনীয়তা", "লোকেশন শেয়ার", "ট্র্যাকিং"],
+          a: "আপনি যাদের অনুমতি দিয়েছেন শুধু সেই পরিবারের সদস্যরাই আপনার অবস্থান দেখতে পারেন। আপনি প্রোফাইলে লোকেশন শেয়ারিং চালু বা বন্ধ করতে পারেন।" } },
+
+  // ---------------- Health & Wellbeing ----------------
+  { id: "medicine", cat: "health",
+    en: { q: "When should I take my medicine?", k: ["medicine", "medicines", "pill", "tablet", "tablets", "medication"],
+          a: "Please check your medicine box or your doctor's prescription, or ask a family member. Never take extra tablets to make up for a missed one." },
+    hi: { q: "मुझे दवा कब लेनी है?", k: ["दवा", "दवाई", "गोली", "टैबलेट"],
+          a: "कृपया अपनी दवा का डिब्बा या डॉक्टर की पर्ची देखिए, या परिवार से पूछिए। छूटी हुई दवा की भरपाई के लिए अतिरिक्त गोली कभी न लें।" },
+    as: { q: "মই কেতিয়া দৰৱ খাব লাগে?", k: ["দৰৱ", "ঔষধ", "বটিকা", "টেবলেট"],
+          a: "অনুগ্ৰহ কৰি আপোনাৰ দৰৱৰ বাকচ বা ডাক্তৰৰ প্ৰেছক্ৰিপচন চাওক, বা পৰিয়ালক সুধিব। এটা দৰৱ বাদ পৰিলে অতিৰিক্ত দৰৱ কেতিয়াও নাখাব।" },
+    bn: { q: "আমি কখন ওষুধ খাব?", k: ["ওষুধ", "ঔষধ", "ট্যাবলেট", "বড়ি"],
+          a: "দয়া করে আপনার ওষুধের বাক্স বা ডাক্তারের প্রেসক্রিপশন দেখুন, বা পরিবারকে জিজ্ঞাসা করুন। একটি ওষুধ বাদ গেলে বাড়তি ওষুধ কখনও খাবেন না।" } },
+  { id: "pain", cat: "health", act: "emergency",
+    en: { q: "I have pain or feel unwell", k: ["pain", "headache", "not feeling well", "feel sick", "dizzy", "unwell", "stomach ache"],
+          a: "I'm sorry you are in pain. Please sit or lie down and rest. If the pain is strong, or you feel dizzy, please call a family member or 108 right away." },
+    hi: { q: "मुझे दर्द है या तबीयत ठीक नहीं", k: ["दर्द", "सिर दर्द", "तबीयत खराब", "चक्कर", "पेट दर्द", "बीमार"],
+          a: "आपको दर्द है, यह सुनकर दुख हुआ। कृपया बैठ जाइए या लेट जाइए। दर्द ज़्यादा हो या चक्कर आए तो तुरंत परिवार को या 108 पर कॉल कीजिए।" },
+    as: { q: "মোৰ বিষ হৈছে বা শৰীৰ ভাল নাই", k: ["বিষ", "মূৰৰ বিষ", "শৰীৰ ভাল নহয়", "মূৰ ঘূৰাইছে", "পেটৰ বিষ", "অসুস্থ"],
+          a: "আপোনাৰ বিষ হৈছে শুনি দুখ পালোঁ। অনুগ্ৰহ কৰি বহক বা শুই বিশ্ৰাম লওক। বিষ বেছি হ'লে বা মূৰ ঘূৰালে তৎক্ষণাত পৰিয়াল বা 108 ত ফোন কৰক।" },
+    bn: { q: "আমার ব্যথা হচ্ছে বা শরীর ভালো নেই", k: ["ব্যথা", "মাথা ব্যথা", "শরীর খারাপ", "মাথা ঘুরছে", "পেট ব্যথা", "অসুস্থ"],
+          a: "আপনার ব্যথা হচ্ছে শুনে দুঃখিত। দয়া করে বসুন বা শুয়ে বিশ্রাম নিন। ব্যথা বেশি হলে বা মাথা ঘুরলে এখনই পরিবারকে বা 108 নম্বরে ফোন করুন।" } },
+  { id: "scared", cat: "health", act: "family",
+    en: { q: "I feel scared or worried", k: ["scared", "afraid", "anxious", "worried", "confused", "upset", "frightened"],
+          a: "It's okay, I'm right here with you. Take a slow, deep breath. Would you like to call a family member?" },
+    hi: { q: "मुझे डर या घबराहट हो रही है", k: ["डर लग रहा", "डर लगता", "घबराहट", "घबरा", "परेशान", "चिंता", "उलझन"],
+          a: "कोई बात नहीं, मैं यहीं हूं। धीरे-धीरे गहरी सांस लीजिए। क्या आप परिवार के किसी सदस्य को बुलाना चाहेंगे?" },
+    as: { q: "মোৰ ভয় বা চিন্তা লাগিছে", k: ["ভয় লাগিছে", "ভয় লগা", "চিন্তা", "বিচলিত", "অস্থিৰ", "ব্যাকুল"],
+          a: "একো নাই, মই ইয়াতে আছোঁ। লাহে লাহে গভীৰ উশাহ লওক। আপুনি পৰিয়ালৰ কোনোবাক মাতিব বিচাৰে নেকি?" },
+    bn: { q: "আমার ভয় বা দুশ্চিন্তা হচ্ছে", k: ["ভয় লাগছে", "ভয় পাচ্ছি", "চিন্তা", "উদ্বিগ্ন", "বিচলিত", "ঘাবড়ে"],
+          a: "কোনো সমস্যা নেই, আমি এখানেই আছি। ধীরে ধীরে গভীর শ্বাস নিন। আপনি কি পরিবারের কাউকে ডাকতে চান?" } },
+  { id: "lonely", cat: "health", act: "games",
+    en: { q: "I feel lonely", k: ["lonely", "alone", "sad", "bored"],
+          a: "You are not alone. I am here with you. Would you like to play a memory game, or call someone you love?" },
+    hi: { q: "मुझे अकेलापन लग रहा है", k: ["अकेला", "अकेली", "उदास", "मन नहीं लग रहा", "बोर"],
+          a: "आप अकेले नहीं हैं, मैं आपके साथ हूं। क्या आप मेमोरी गेम खेलना चाहेंगे या अपने किसी प्रियजन को बुलाएंगे?" },
+    as: { q: "মই অকলশৰীয়া অনুভৱ কৰিছো", k: ["অকলশৰীয়া", "অকলে", "দুখী", "মন ভাল নলগা", "বোৰ"],
+          a: "আপুনি অকলশৰীয়া নহয়, মই আপোনাৰ লগত আছোঁ। আপুনি মেমৰি গেম খেলিব নেকি, নে আপোনাৰ প্ৰিয়জনক মাতিব?" },
+    bn: { q: "আমার একা লাগছে", k: ["একা", "একাকী", "মন খারাপ", "বিরক্ত", "দুঃখী"],
+          a: "আপনি একা নন, আমি আপনার সঙ্গে আছি। আপনি কি মেমরি গেম খেলবেন, নাকি প্রিয়জনকে ডাকবেন?" } },
+  { id: "sleep", cat: "health",
+    en: { q: "I cannot sleep", k: ["cant sleep", "cannot sleep", "not able to sleep", "sleepless", "sleep"],
+          a: "Try lying down comfortably and taking a few slow breaths. A glass of warm water may help. If you feel worried, tell a family member in the morning." },
+    hi: { q: "मुझे नींद नहीं आ रही", k: ["नींद नहीं", "सो नहीं पा"],
+          a: "आराम से लेटकर कुछ धीमी सांसें लीजिए। एक गिलास गुनगुना पानी मदद कर सकता है। चिंता हो तो सुबह परिवार से बात कीजिए।" },
+    as: { q: "মোৰ টোপনি অহা নাই", k: ["টোপনি নাহে", "টোপনি অহা নাই", "টোপনি নাই", "শুব নোৱাৰো"],
+          a: "আৰামেৰে শুই কেইবাবাৰো লাহে লাহে উশাহ লওক। এগিলাচ গৰম পানীয়ে সহায় কৰিব পাৰে। চিন্তা হ'লে ৰাতিপুৱা পৰিয়ালক কওক।" },
+    bn: { q: "আমার ঘুম আসছে না", k: ["ঘুম আসছে না", "ঘুম হচ্ছে না", "ঘুম নেই", "ঘুমাতে পারছি না"],
+          a: "আরাম করে শুয়ে কয়েকবার ধীরে শ্বাস নিন। এক গ্লাস হালকা গরম জল সাহায্য করতে পারে। দুশ্চিন্তা হলে সকালে পরিবারকে বলুন।" } },
+  { id: "breathing", cat: "health",
+    en: { q: "Help me relax", k: ["exercise", "breathing", "relax", "calm down", "breathe"],
+          a: "Let's take three slow breaths together. Breathe in slowly... and breathe out... Once more, in... and out... You are doing very well." },
+    hi: { q: "मुझे शांत होने में मदद करें", k: ["सांस", "आराम", "शांत", "रिलैक्स"],
+          a: "चलिए तीन धीमी सांसें साथ लेते हैं। सांस अंदर... और बाहर... एक बार फिर, अंदर... और बाहर... आप बहुत अच्छा कर रहे हैं।" },
+    as: { q: "মোক শান্ত হ'বলৈ সহায় কৰক", k: ["উশাহ", "শান্ত", "আৰাম", "ৰিলেক্স"],
+          a: "আহক তিনিবাৰ লাহে লাহে উশাহ লওঁ। উশাহ ভিতৰলৈ... আৰু বাহিৰলৈ... আকৌ এবাৰ, ভিতৰলৈ... আৰু বাহিৰলৈ... আপুনি বৰ ভাল কৰিছে।" },
+    bn: { q: "আমাকে শান্ত হতে সাহায্য করুন", k: ["শ্বাস", "শান্ত", "আরাম", "রিলাক্স"],
+          a: "আসুন তিনবার ধীরে শ্বাস নিই। শ্বাস ভেতরে... আর বাইরে... আরও একবার, ভেতরে... আর বাইরে... আপনি খুব ভালো করছেন।" } },
+  { id: "water", cat: "health",
+    en: { q: "I am thirsty", k: ["water", "drink water", "thirsty", "thirst"],
+          a: "Please drink a glass of water. Staying hydrated is important." },
+    hi: { q: "मुझे प्यास लगी है", k: ["पानी", "प्यास", "प्यासा", "प्यासी"],
+          a: "कृपया एक गिलास पानी पीजिए। शरीर में पानी बना रहना ज़रूरी है।" },
+    as: { q: "মোৰ পিয়াহ লাগিছে", k: ["পানী", "পিয়াহ"],
+          a: "অনুগ্ৰহ কৰি এগিলাচ পানী খাওক। শৰীৰত পানী থকাটো গুৰুত্বপূৰ্ণ।" },
+    bn: { q: "আমার তেষ্টা পেয়েছে", k: ["জল", "পানি", "তেষ্টা", "পিপাসা"],
+          a: "দয়া করে এক গ্লাস জল খান। শরীরে জলের ঘাটতি না থাকা গুরুত্বপূর্ণ।" } },
+  { id: "hungry", cat: "health",
+    en: { q: "I am hungry", k: ["hungry", "food", "eat", "hunger"],
+          a: "Please have something light to eat. Would you like me to help you call someone?" },
+    hi: { q: "मुझे भूख लगी है", k: ["भूख", "खाना"],
+          a: "कृपया कुछ हल्का खा लीजिए। क्या मैं किसी को बुलाने में मदद करूं?" },
+    as: { q: "মোৰ ভোক লাগিছে", k: ["ভোক", "ভাত", "খাদ্য", "খাবলৈ"],
+          a: "অনুগ্ৰহ কৰি লঘু কিবা খাওক। মই কাৰোবাক মাতিবলৈ সহায় কৰিম নেকি?" },
+    bn: { q: "আমার খিদে পেয়েছে", k: ["খিদে", "খিদা", "খাবার", "ক্ষুধা", "ভাত"],
+          a: "দয়া করে হালকা কিছু খেয়ে নিন। আমি কি কাউকে ডাকতে সাহায্য করব?" } },
+  { id: "toilet", cat: "health",
+    en: { q: "I need the toilet", k: ["toilet", "bathroom", "washroom", "restroom"],
+          a: "Please go slowly and switch on the light. Hold the handrail if there is one. If you need help, please call a family member." },
+    hi: { q: "मुझे शौचालय जाना है", k: ["शौचालय", "बाथरूम", "टॉयलेट", "पेशाब", "वॉशरूम"],
+          a: "कृपया धीरे-धीरे जाइए और रोशनी जला लीजिए। सहारे के लिए रेलिंग पकड़िए। मदद चाहिए तो परिवार के किसी सदस्य को बुलाइए।" },
+    as: { q: "মই শৌচালয়লৈ যাব লাগে", k: ["শৌচালয়", "বাথৰুম", "টয়লেট", "ট'ইলেট"],
+          a: "অনুগ্ৰহ কৰি লাহে লাহে যাওক আৰু পোহৰ জ্বলাই লওক। ধৰিবলৈ ৰেলিং থাকিলে ধৰক। সহায় লাগিলে পৰিয়ালৰ কাৰোবাক মাতক।" },
+    bn: { q: "আমাকে টয়লেটে যেতে হবে", k: ["টয়লেট", "বাথরুম", "শৌচালয়", "ওয়াশরুম"],
+          a: "দয়া করে ধীরে ধীরে যান এবং আলো জ্বালিয়ে নিন। ধরার জন্য রেলিং থাকলে ধরুন। সাহায্য লাগলে পরিবারের কাউকে ডাকুন।" } },
+
+  // ---------------- Everyday ----------------
+  { id: "time", cat: "daily",
+    en: { q: "What time is it?", k: ["time", "what time", "clock"], a: "It is {time} now." },
+    hi: { q: "अभी क्या समय हुआ है?", k: ["समय", "टाइम", "क्या समय", "कितने बजे", "कितना बजा"], a: "अभी समय है {time}।" },
+    as: { q: "এতিয়া কি সময় হৈছে?", k: ["সময়", "কিমান বাজিছে", "কিমান বাজিল", "টাইম"], a: "এতিয়া সময় {time}।" },
+    bn: { q: "এখন কটা বাজে?", k: ["সময়", "কটা বাজে", "কয়টা বাজে", "টাইম"], a: "এখন সময় {time}।" } },
+  { id: "date", cat: "daily",
+    en: { q: "What is today's date?", k: ["date", "today", "what day", "day is it"], a: "Today is {date}." },
+    hi: { q: "आज की तारीख क्या है?", k: ["तारीख", "आज का दिन", "आज कौन सा दिन", "आज क्या दिन", "तिथि"], a: "आज {date} है।" },
+    as: { q: "আজি কি তাৰিখ?", k: ["তাৰিখ", "আজি কি বাৰ", "আজি কি দিন", "আজিৰ তাৰিখ"], a: "আজি {date}।" },
+    bn: { q: "আজ কত তারিখ?", k: ["তারিখ", "আজ কি বার", "আজ কী বার", "আজকের তারিখ"], a: "আজ {date}।" } },
+  { id: "weather", cat: "daily",
+    en: { q: "What is the weather like?", k: ["weather", "raining", "rain", "hot", "cold"],
+          a: "I cannot check live weather yet. Please look outside or ask a family member." },
+    hi: { q: "आज मौसम कैसा है?", k: ["मौसम", "बारिश", "गर्मी", "सर्दी"],
+          a: "अभी मैं लाइव मौसम नहीं बता सकती। कृपया खिड़की से बाहर देखें या परिवार से पूछें।" },
+    as: { q: "আজি বতৰ কেনে?", k: ["বতৰ", "বৰষুণ", "গৰম", "ঠাণ্ডা"],
+          a: "মই এতিয়া বতৰৰ তথ্য ক'ব নোৱাৰোঁ। অনুগ্ৰহ কৰি বাহিৰলৈ চাওক বা পৰিয়ালক সুধিব।" },
+    bn: { q: "আজ আবহাওয়া কেমন?", k: ["আবহাওয়া", "বৃষ্টি", "গরম", "ঠান্ডা"],
+          a: "আমি এখন আবহাওয়ার খবর বলতে পারি না। দয়া করে বাইরে দেখুন বা পরিবারের কাউকে জিজ্ঞাসা করুন।" } },
+
+  // ---------------- Using this app ----------------
+  { id: "game", cat: "app", act: "games",
+    en: { q: "How do I play the memory game?", k: ["memory game", "play game", "game rules", "how to play"],
+          a: "To play the memory game, tap two cards to turn them over. If they match, they stay open. Try to match all the pairs!" },
+    hi: { q: "मेमोरी गेम कैसे खेलें?", k: ["मेमोरी गेम", "खेल", "गेम कैसे", "कैसे खेलें"],
+          a: "मेमोरी गेम खेलने के लिए दो कार्ड दबाकर पलटिए। अगर वे एक जैसे हों तो खुले रहेंगे। सारी जोड़ियां मिलाने की कोशिश कीजिए!" },
+    as: { q: "মেমৰি গেম কেনেকৈ খেলিব?", k: ["মেমৰি গেম", "খেল", "গেম কেনেকৈ", "কেনেকৈ খেলিব"],
+          a: "মেমৰি গেম খেলিবলৈ দুখন কাৰ্ড টিপি ওলটাওক। একে হ'লে সেইকেইখন খোলাই থাকিব। সকলো যোৰ মিলাবলৈ চেষ্টা কৰক!" },
+    bn: { q: "মেমরি গেম কীভাবে খেলব?", k: ["মেমরি গেম", "খেলা", "গেম কীভাবে", "কীভাবে খেলব"],
+          a: "মেমরি গেম খেলতে দুটি কার্ডে চাপ দিয়ে উল্টে দিন। মিলে গেলে সেগুলো খোলা থাকবে। সব জোড়া মেলানোর চেষ্টা করুন!" } },
+  { id: "games", cat: "app", act: "games",
+    en: { q: "Which games are there?", k: ["which games", "what games", "games available", "list of games", "games"],
+          a: "There are three games: Word–Picture Match, Story or Sequence Memory, and Random General Knowledge. Open Games on the Home screen to start." },
+    hi: { q: "कौन-कौन से खेल हैं?", k: ["कौन से खेल", "कौन कौन से खेल", "कितने खेल", "खेल कौन"],
+          a: "तीन खेल हैं: शब्द–चित्र मिलान, कहानी या क्रम याद रखना, और सामान्य ज्ञान। शुरू करने के लिए होम स्क्रीन पर 'खेल' खोलिए।" },
+    as: { q: "কি কি খেল আছে?", k: ["কি কি খেল", "কেইটা খেল", "কোনবোৰ খেল"],
+          a: "তিনিটা খেল আছে: শব্দ–ছবি মিলোৱা, সাধু বা ক্ৰম মনত ৰখা, আৰু সাধাৰণ জ্ঞান। আৰম্ভ কৰিবলৈ হোম স্ক্ৰীনত 'খেল' খোলক।" },
+    bn: { q: "কী কী খেলা আছে?", k: ["কোন কোন খেলা", "কয়টি খেলা", "কী কী খেলা", "কোন খেলা"],
+          a: "তিনটি খেলা আছে: শব্দ–ছবি মেলানো, গল্প বা ক্রম মনে রাখা, এবং সাধারণ জ্ঞান। শুরু করতে হোম স্ক্রিনে 'খেলা' খুলুন।" } },
+  { id: "progress", cat: "app",
+    en: { q: "Where can I see my progress?", k: ["my progress", "my score", "my scores", "progress", "how am i doing"],
+          a: "Open Progress on the Home screen to see how you are improving. Your family can also see your progress." },
+    hi: { q: "मैं अपनी प्रगति कहां देखूं?", k: ["मेरी प्रगति", "मेरा स्कोर", "प्रगति", "स्कोर", "मैं कैसा कर रहा"],
+          a: "अपनी प्रगति देखने के लिए होम स्क्रीन पर 'प्रगति' खोलिए। आपका परिवार भी इसे देख सकता है।" },
+    as: { q: "মই মোৰ প্ৰগতি ক'ত চাম?", k: ["মোৰ প্ৰগতি", "মোৰ স্ক'ৰ", "প্ৰগতি", "স্ক'ৰ"],
+          a: "আপোনাৰ উন্নতি চাবলৈ হোম স্ক্ৰীনত 'প্ৰগতি' খোলক। আপোনাৰ পৰিয়ালেও ইয়াক চাব পাৰে।" },
+    bn: { q: "আমি আমার অগ্রগতি কোথায় দেখব?", k: ["আমার অগ্রগতি", "আমার স্কোর", "অগ্রগতি", "স্কোর"],
+          a: "আপনার উন্নতি দেখতে হোম স্ক্রিনে 'অগ্রগতি' খুলুন। আপনার পরিবারও এটি দেখতে পারে।" } },
+  { id: "profile", cat: "app",
+    en: { q: "What is my name? Where do I live?", k: ["what is my name", "my name", "where do i live", "my address", "my home address"],
+          a: "Your name and address are saved in your Profile. Please open Profile on the Home screen, or ask a family member to look at it with you." },
+    hi: { q: "मेरा नाम क्या है? मैं कहां रहता हूं?", k: ["मेरा नाम", "मैं कहां रहता", "मैं कहां रहती", "मेरा पता", "मेरा घर"],
+          a: "आपका नाम और पता आपकी प्रोफ़ाइल में सेव है। कृपया होम स्क्रीन पर 'प्रोफ़ाइल' खोलिए, या परिवार के किसी सदस्य से साथ में देखने को कहिए।" },
+    as: { q: "মোৰ নাম কি? মই ক'ত থাকোঁ?", k: ["মোৰ নাম", "মই ক'ত থাকোঁ", "মোৰ ঠিকনা", "মোৰ ঘৰ"],
+          a: "আপোনাৰ নাম আৰু ঠিকনা আপোনাৰ প্ৰ'ফাইলত সংৰক্ষিত আছে। অনুগ্ৰহ কৰি হোম স্ক্ৰীনত 'প্ৰ'ফাইল' খোলক, বা পৰিয়ালৰ কাৰোবাক লগত চাবলৈ কওক।" },
+    bn: { q: "আমার নাম কী? আমি কোথায় থাকি?", k: ["আমার নাম", "আমি কোথায় থাকি", "আমার ঠিকানা", "আমার বাড়ি"],
+          a: "আপনার নাম ও ঠিকানা আপনার প্রোফাইলে সেভ করা আছে। দয়া করে হোম স্ক্রিনে 'প্রোফাইল' খুলুন, বা পরিবারের কাউকে সঙ্গে দেখতে বলুন।" } },
+  { id: "language", cat: "app",
+    en: { q: "How do I change the language?", k: ["change language", "language", "other language"],
+          a: "Tap one of the language buttons — English, Hindi, Assamese or Bengali — in the Language section on this page." },
+    hi: { q: "भाषा कैसे बदलें?", k: ["भाषा बदल", "भाषा", "दूसरी भाषा"],
+          a: "इस पेज पर 'भाषा' वाले हिस्से में अंग्रेज़ी, हिंदी, असमिया या बंगाली का बटन दबाइए।" },
+    as: { q: "ভাষা কেনেকৈ সলনি কৰিম?", k: ["ভাষা সলনি", "ভাষা", "অন্য ভাষা"],
+          a: "এই পৃষ্ঠাৰ 'ভাষা' অংশত ইংৰাজী, হিন্দী, অসমীয়া বা বঙালী বুটামত টিপক।" },
+    bn: { q: "ভাষা কীভাবে বদলাব?", k: ["ভাষা বদল", "ভাষা", "অন্য ভাষা"],
+          a: "এই পাতার 'ভাষা' অংশে ইংরেজি, হিন্দি, অসমীয়া বা বাংলা বোতামে চাপুন।" } },
+  { id: "textsize", cat: "app",
+    en: { q: "How do I make the letters bigger?", k: ["bigger letters", "larger text", "bigger text", "cant read", "text too small", "small letters", "font size"],
+          a: "Use the A+ button at the top right of the page to make the letters bigger. You can also switch on High Contrast." },
+    hi: { q: "अक्षर बड़े कैसे करें?", k: ["अक्षर बड़े", "बड़े अक्षर", "पढ़ नहीं पा", "अक्षर छोटे", "फ़ॉन्ट", "फॉन्ट"],
+          a: "अक्षर बड़े करने के लिए पेज के ऊपर दाईं ओर A+ बटन दबाइए। आप 'हाई कंट्रास्ट' भी चालू कर सकते हैं।" },
+    as: { q: "আখৰ কেনেকৈ ডাঙৰ কৰিম?", k: ["আখৰ ডাঙৰ", "ডাঙৰ আখৰ", "পঢ়িব নোৱাৰো", "আখৰ সৰু", "ফণ্ট"],
+          a: "আখৰ ডাঙৰ কৰিবলৈ পৃষ্ঠাৰ ওপৰৰ সোঁফালে A+ বুটামত টিপক। আপুনি 'হাই কন্ট্ৰাষ্ট'ও চলাব পাৰে।" },
+    bn: { q: "অক্ষর কীভাবে বড় করব?", k: ["অক্ষর বড়", "বড় অক্ষর", "পড়তে পারছি না", "অক্ষর ছোট", "ফন্ট"],
+          a: "অক্ষর বড় করতে পাতার উপরে ডানদিকে A+ বোতামে চাপুন। আপনি 'হাই কনট্রাস্ট'ও চালু করতে পারেন।" } },
+  { id: "whoami", cat: "app",
+    en: { q: "Who are you?", k: ["who are you", "your name", "smriti", "who is smriti"],
+          a: "I'm Smriti, your voice companion. I can tell you the time and date, show your location, answer everyday questions, and point you to games and family help." },
+    hi: { q: "आप कौन हैं?", k: ["तुम कौन हो", "आप कौन हैं", "तुम्हारा नाम", "आपका नाम", "स्मृति"],
+          a: "मैं स्मृति हूं, आपकी आवाज़ की साथी। मैं समय और तारीख बता सकती हूं, आपकी जगह दिखा सकती हूं, रोज़मर्रा के सवालों के जवाब दे सकती हूं, और खेल व परिवार की मदद तक पहुंचा सकती हूं।" },
+    as: { q: "আপুনি কোন?", k: ["তুমি কোন", "আপুনি কোন", "আপোনাৰ নাম", "তোমাৰ নাম", "স্মৃতি"],
+          a: "মই স্মৃতি, আপোনাৰ কণ্ঠৰ সঙ্গী। মই সময় আৰু তাৰিখ ক'ব পাৰোঁ, আপোনাৰ অৱস্থান দেখুৱাব পাৰোঁ, দৈনন্দিন প্ৰশ্নৰ উত্তৰ দিব পাৰোঁ, আৰু খেল আৰু পৰিয়ালৰ সহায়লৈ লৈ যাব পাৰোঁ।" },
+    bn: { q: "আপনি কে?", k: ["তুমি কে", "আপনি কে", "আপনার নাম", "তোমার নাম", "স্মৃতি"],
+          a: "আমি স্মৃতি, আপনার কণ্ঠের সঙ্গী। আমি সময় ও তারিখ বলতে পারি, আপনার অবস্থান দেখাতে পারি, দৈনন্দিন প্রশ্নের উত্তর দিতে পারি, এবং খেলা ও পরিবারের সাহায্যে পৌঁছে দিতে পারি।" } },
+  { id: "help", cat: "app",
+    en: { q: "What can you do?", k: ["help", "what can you do", "how can you help"],
+          a: "You can ask me the time, date, your location, medicine, or games. Say 'call my family' or 'emergency' if you need help." },
+    hi: { q: "आप क्या-क्या कर सकती हैं?", k: ["मदद", "क्या कर सकती हो", "क्या कर सकते हो", "आप क्या कर"],
+          a: "आप मुझसे समय, तारीख, लोकेशन, दवा, खेल के बारे में पूछ सकते हैं, या ज़रूरत पर 'परिवार को बुलाओ' या 'इमरजेंसी' कह सकते हैं।" },
+    as: { q: "আপুনি কি কৰিব পাৰে?", k: ["সহায়", "তুমি কি কৰিব পাৰা", "আপুনি কি কৰিব পাৰে"],
+          a: "আপুনি মোক সময়, তাৰিখ, অৱস্থান, দৰৱ, খেলৰ বিষয়ে সুধিব পাৰে, বা প্ৰয়োজন হ'লে 'পৰিয়ালক ফোন কৰা' বা 'জৰুৰী' ক'ব পাৰে।" },
+    bn: { q: "আপনি কী করতে পারেন?", k: ["সাহায্য", "তুমি কী করতে পারো", "আপনি কী করতে পারেন"],
+          a: "আপনি আমাকে সময়, তারিখ, অবস্থান, ওষুধ, খেলা সম্পর্কে জিজ্ঞাসা করতে পারেন, অথবা প্রয়োজনে 'পরিবারকে ফোন করো' বা 'জরুরি' বলতে পারেন।" } }
+];
+
+// Lower-case, fold look-alike letters, strip punctuation so keyword matching is forgiving.
+function norm(s) {
+  s = (s || "").normalize("NFC").toLowerCase();
+  s = s.replace(/['’‘`´]/g, "");                    // apostrophes: can't -> cant
+  s = s.replace(/[\u200c\u200d]/g, "");              // zero-width joiners
+  s = s.replace(/ৰ/g, "র").replace(/ৱ/g, "ব");       // Assamese letters -> Bengali forms
+  s = s.replace(/[\u0901\u0981]/g, "\u0902");        // chandrabindu -> anusvara (voice typing varies)
+  s = s.replace(/[\u093c\u09bc]/g, "");              // drop nukta
+  s = s.replace(/[^\p{L}\p{N}\p{M}\s]/gu, " ");      // punctuation (incl. danda) -> space
+  return s.replace(/\s+/g, " ").trim();
+}
+
+// Precompute keywords from ALL languages, so a Hindi word typed in English mode (or a
+// speech engine returning Bengali script for Assamese) still finds the right answer.
+const KW = FAQS.map(e => ({
+  e,
+  ks: ["en", "hi", "as", "bn"].flatMap(l => e[l].k.map(norm)).filter(Boolean)
+}));
+
+function findEntry(text) {
+  const t = norm(text);
+  if (!t) return null;
+  const padded = " " + t + " ", pre = " " + t;
+  let best = null, bestScore = 0;
+  for (const { e, ks } of KW) {
+    let max = 0, hits = 0;
+    for (const kw of ks) {
+      const latin = /^[a-z0-9 ]+$/.test(kw);
+      // Latin keywords must match whole words; Indic keywords match word starts (handles suffixes).
+      const hit = latin ? padded.includes(" " + kw + " ") : pre.includes(" " + kw);
+      if (!hit) continue;
+      hits++;
+      const s = kw.split(" ").length * 3 + (t === kw ? 10 : 0);
+      if (s > max) max = s;
+    }
+    const total = max ? max + hits - 1 : 0;
+    if (total > bestScore) { bestScore = total; best = e; }
+  }
+  return bestScore >= 3 ? best : null;
+}
+/*DATA-END*/
+
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+  };
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const FEMALE = /female|zira|samantha|karen|heera|veena|aria|swara|neerja|tanishaa|priya|lekha|kalpana|google/i;
+
+  let lang = store.get("smriti_lang", "en");
+  if (!LANGS[lang]) lang = "en";
+  let fsIdx = parseInt(store.get("smriti_fs", "1"), 10);
+  if (!(fsIdx >= 0 && fsIdx <= 3)) fsIdx = 1;
+  const FS = [15, 17, 20, 23];
+
+  let cmdRec = null, wakeRec = null;
+  let listening = false, wakeOn = false, wakeRestart = false, micOK = false, speaking = false, errorShown = false;
+  let lastReply = "";
+  const noVoiceShown = {};
+
+  const statusEl = $("status"), micBtn = $("micBtn"), transcript = $("transcript");
+  const wakeToggle = $("wakeToggle"), permBanner = $("permBanner");
+  const t = k => UI[lang][k];
+
+  /* ---------- status ---------- */
+  function setStatus(keyOrText, type) {
+    statusEl.textContent = UI[lang][keyOrText] || keyOrText;
+    statusEl.className = "status" + (type ? " " + type : "");
+  }
+  function setIdle() { setStatus(wakeOn ? "wakeSay" : "tapMic"); }
+
+  /* ---------- appearance controls ---------- */
+  function applyFont() {
+    document.documentElement.style.fontSize = FS[fsIdx] + "px";
+    store.set("smriti_fs", String(fsIdx));
+  }
+  $("fsUp").onclick = () => { fsIdx = Math.min(3, fsIdx + 1); applyFont(); };
+  $("fsDown").onclick = () => { fsIdx = Math.max(0, fsIdx - 1); applyFont(); };
+  $("fsReset").onclick = () => { fsIdx = 1; applyFont(); };
+  function applyContrast(on) {
+    document.body.classList.toggle("hc", on);
+    $("hcBtn").setAttribute("aria-pressed", String(on));
+    store.set("smriti_hc", on ? "1" : "0");
+  }
+  $("hcBtn").onclick = () => applyContrast(!document.body.classList.contains("hc"));
+
+  /* ---------- text on the page ---------- */
+  function applyUI() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i]").forEach(n => { n.textContent = UI[lang][n.dataset.i]; });
+    $("typeInput").placeholder = t("typePh");
+    $("sizeGrp").setAttribute("aria-label", t("textSize"));
+    micBtn.setAttribute("aria-label", t("tapMic"));
+    document.title = t("siteTitle") + " — Manova";
+    document.querySelectorAll(".lang-btn").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+    renderQuick();
+    renderFAQ();
+    setIdle();
+  }
+
+  function renderLangButtons() {
+    const g = $("langGrid");
+    Object.keys(LANGS).forEach(code => {
+      const b = el("button", "lang-btn", LANGS[code].native);
+      b.type = "button"; b.dataset.lang = code; b.lang = code;
+      b.onclick = () => switchLang(code);
+      g.appendChild(b);
+    });
+  }
+
+  function switchLang(code) {
+    if (code === lang) return;
+    lang = code;
+    store.set("smriti_lang", code);
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    applyUI();
+    if (wakeOn) { wakeRestart = false; try { wakeRec.stop(); } catch (_) {} setTimeout(startWake, 400); }
+  }
+
+  /* ---------- answers ---------- */
+  function fill(a) {
+    const c = LANGS[lang], now = new Date();
+    return a
+      .replace("{time}", now.toLocaleTimeString(c.locale, { hour: "2-digit", minute: "2-digit" }))
+      .replace("{date}", now.toLocaleDateString(c.locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" }))
+      .replace("{last}", lastReply || t("askAgain"));
+  }
+
+  function addActions(box, act) {
+    if (!act || !ACTIONS[act]) return;
+    const row = el("div", "acts");
+    ACTIONS[act].forEach(([key, href, danger]) => {
+      const a = el("a", "act-btn" + (danger ? " danger" : ""), t(key));
+      a.href = href;
+      row.appendChild(a);
+    });
+    box.appendChild(row);
+  }
+
+  function addTurn(userText, answer, act) {
+    const ph = transcript.querySelector(".placeholder");
+    if (ph) ph.remove();
+    const turn = el("div", "turn");
+    const u = el("div", "msg you"); u.appendChild(el("span", "who", t("you"))); u.appendChild(el("span", "", userText));
+    const b = el("div", "msg bot"); b.appendChild(el("span", "who", t("bot"))); b.appendChild(el("span", "", answer));
+    addActions(b, act);
+    turn.appendChild(u); turn.appendChild(b);
+    transcript.appendChild(turn);
+    transcript.scrollTop = transcript.scrollHeight;
+  }
+
+  function respond(userText, entry) {
+    let answer = t("fallback"), act = null;
+    if (entry) { answer = fill(entry[lang].a); act = entry.act; }
+    if (!(entry && entry.id === "repeat")) lastReply = answer;
+    addTurn(userText, answer, act);
+    speak(answer).then(spoke => { if (spoke && !listening) setIdle(); if (wakeOn) setTimeout(startWake, 500); });
+  }
+  function ask(text) { respond(text, findEntry(text)); }
+  function askEntry(e) { respond(e[lang].q, e); }
+
+  /* ---------- quick questions + FAQ ---------- */
+  function renderQuick() {
+    const box = $("chips"); box.textContent = "";
+    QUICK.forEach(id => {
+      const e = FAQS.find(x => x.id === id);
+      const c = el("button", "chip", e[lang].q); c.type = "button";
+      c.onclick = () => askEntry(e);
+      box.appendChild(c);
+    });
+  }
+
+  function renderFAQ() {
+    const box = $("faqList"); box.textContent = "";
+    CATS.forEach(cat => {
+      const items = FAQS.filter(e => e.cat === cat);
+      if (!items.length) return;
+      box.appendChild(el("h3", "faq-cat", t("cats")[cat]));
+      items.forEach(e => {
+        const d = document.createElement("details");
+        d.appendChild(el("summary", "", e[lang].q));
+        const body = el("div", "faq-body");
+        d.appendChild(body);
+        d.addEventListener("toggle", () => {
+          if (!d.open) return;
+          body.textContent = "";
+          const ans = fill(e[lang].a);
+          body.appendChild(el("p", "", ans));
+          const lb = el("button", "listen-btn", t("listen")); lb.type = "button";
+          lb.onclick = () => speak(ans);
+          body.appendChild(lb);
+          addActions(body, e.act);
+        });
+        box.appendChild(d);
+      });
+    });
+  }
+
+  /* ---------- speech out ---------- */
+  function pickVoice(cfg) {
+    const vs = speechSynthesis.getVoices();
+    if (!vs.length) return undefined;                      // list not loaded: let browser choose
+    for (const cand of cfg.voices) {
+      const c = cand.toLowerCase();
+      const list = vs.filter(v => {
+        const l = v.lang.toLowerCase().replace("_", "-");
+        return c.includes("-") ? l === c : l.split("-")[0] === c;
+      });
+      if (list.length) return list.find(v => FEMALE.test(v.name)) || list[0];
+    }
+    return null;                                           // none for this language
+  }
+  if ("speechSynthesis" in window) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; }
+
+  function speak(text) {
+    return new Promise(resolve => {
+      if (!("speechSynthesis" in window)) return resolve(false);
+      const v = pickVoice(LANGS[lang]);
+      if (v === null) {
+        if (!noVoiceShown[lang]) { noVoiceShown[lang] = true; setStatus("noVoice", "error"); }
+        return resolve(false);
+      }
+      speechSynthesis.cancel();
+      speaking = true; setStatus("speaking");
+      const u = new SpeechSynthesisUtterance(text);
+      if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = LANGS[lang].stt; }
+      u.rate = 0.88; u.pitch = 1.05;
+      const done = () => { speaking = false; resolve(true); };
+      u.onend = u.onerror = done;
+      speechSynthesis.speak(u);
+    });
+  }
+
+  /* ---------- speech in ---------- */
+  async function ensureMic() {
+    if (micOK) return true;
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach(tr => tr.stop());
+      micOK = true; permBanner.classList.remove("show");
+      return true;
+    } catch (_) {
+      permBanner.classList.add("show"); setStatus("allowMic", "error");
+      return false;
+    }
+  }
+
+  function stopUI() {
+    listening = false;
+    micBtn.classList.remove("on"); micBtn.setAttribute("aria-pressed", "false");
+  }
+
+  function initRecognizers() {
+    if (!SR) {
+      micBtn.disabled = true; wakeToggle.disabled = true; setStatus("useChrome", "error");
+      return;
+    }
+    cmdRec = new SR();
+    cmdRec.continuous = false; cmdRec.interimResults = false;
+    cmdRec.onstart = () => {
+      listening = true; errorShown = false;
+      micBtn.classList.add("on"); micBtn.setAttribute("aria-pressed", "true");
+      setStatus("listening", "listening");
+    };
+    cmdRec.onerror = e => {
+      if (e.error === "aborted") return;
+      errorShown = true;
+      if (e.error === "language-not-supported") setStatus("langNoStt", "error");
+      else if (e.error === "no-speech") setStatus("noSpeech", "error");
+      else if (e.error === "not-allowed" || e.error === "service-not-allowed") { permBanner.classList.add("show"); setStatus("allowMic", "error"); }
+      else setStatus("Error: " + e.error, "error");
+    };
+    cmdRec.onend = () => {
+      stopUI();
+      if (!errorShown && !speaking) setIdle();
+      if (wakeOn && !speaking) setTimeout(startWake, 400);
+    };
+    cmdRec.onresult = e => {
+      const said = e.results[0][0].transcript.trim();
+      if (said) ask(said);
+    };
+
+    wakeRec = new SR();
+    wakeRec.continuous = true; wakeRec.interimResults = true;
+    wakeRec.onresult = e => {
+      const phrases = LANGS[lang].wake.map(norm);
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const said = norm(e.results[i][0].transcript);
+        if (phrases.some(p => said.includes(p))) {
+          wakeRestart = false;
+          try { wakeRec.stop(); } catch (_) {}
+          speak(t("wakeAck")).then(() => setTimeout(() => { if (!listening) startCommand(); }, 300));
+          return;
+        }
+      }
+    };
+    wakeRec.onerror = e => {
+      if (e.error === "language-not-supported") {
+        wakeOn = false; wakeRestart = false; wakeToggle.checked = false;
+        setStatus("langNoStt", "error");
+      }
+    };
+    wakeRec.onend = () => {
+      if (wakeOn && wakeRestart && !listening && !speaking) setTimeout(() => { try { wakeRec.start(); } catch (_) {} }, 300);
+    };
+  }
+
+  function startWake() {
+    if (!wakeRec || !wakeOn) return;
+    wakeRec.lang = LANGS[lang].stt;
+    wakeRestart = true;
+    try { wakeRec.start(); setStatus("wakeSay"); } catch (_) {}
+  }
+  function stopWake() {
+    wakeRestart = false;
+    try { wakeRec.stop(); } catch (_) {}
+    setIdle();
+  }
+
+  async function startCommand() {
+    if (listening || !cmdRec) return;
+    if (!(await ensureMic())) return;
+    if (wakeOn) { wakeRestart = false; try { wakeRec.stop(); } catch (_) {} }
+    cmdRec.lang = LANGS[lang].stt;
+    try { cmdRec.start(); } catch (_) { setStatus("retry", "error"); }
+  }
+
+  micBtn.onclick = () => {
+    if (speaking) { speechSynthesis.cancel(); speaking = false; }
+    if (listening) cmdRec.stop(); else startCommand();
+  };
+  wakeToggle.onchange = async () => {
+    wakeOn = wakeToggle.checked;
+    if (wakeOn) {
+      if (!(await ensureMic())) { wakeToggle.checked = false; wakeOn = false; return; }
+      startWake();
+    } else stopWake();
+  };
+  $("typeForm").onsubmit = ev => {
+    ev.preventDefault();
+    const inp = $("typeInput"), v = inp.value.trim();
+    if (v) { ask(v); inp.value = ""; }
+  };
+
+  /* ---------- start ---------- */
+  applyFont();
+  applyContrast(store.get("smriti_hc", "0") === "1");
+  renderLangButtons();
+  initRecognizers();
+  applyUI();
+})();
+</script>
+</body>
+</html>
