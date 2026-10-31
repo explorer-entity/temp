@@ -1,4 +1,1 @@
-__pycache__/
-*.pyc
-smriti.db
-.vscode/
+*.log

@@ -76,6 +76,14 @@ consecutive_outside_tracker = {}  # in-memory, resets if the server restarts
 @app.route('/api/update_location', methods=['POST'])
 def update_location():
     data = request.get_json() or {}
+    # Accept both canonical keys and short aliases (lat/lng) for robustness.
+    if 'latitude' not in data and 'lat' in data:
+        data['latitude'] = data['lat']
+    if 'longitude' not in data and 'lng' in data:
+        data['longitude'] = data['lng']
+    missing = [f for f in ('user_id', 'latitude', 'longitude') if f not in data]
+    if missing:
+        return jsonify({"status": "error", "missing": missing}), 400
     conn = get_db_connection()
     conn.execute('INSERT INTO Locations (user_id, latitude, longitude) VALUES (?, ?, ?)',
         (data['user_id'], data['latitude'], data['longitude']))
@@ -195,6 +203,16 @@ def haversine_meters(lat1, lng1, lat2, lng2):
 @app.route('/api/set_geofence', methods=['POST'])
 def set_geofence():
     data = request.get_json() or {}
+    # Accept short aliases (lat/lng/radius_m) for robustness.
+    if 'center_lat' not in data and 'lat' in data:
+        data['center_lat'] = data['lat']
+    if 'center_lng' not in data and 'lng' in data:
+        data['center_lng'] = data['lng']
+    if 'radius_meters' not in data and 'radius_m' in data:
+        data['radius_meters'] = data['radius_m']
+    missing = [f for f in ('patient_id', 'center_lat', 'center_lng') if f not in data]
+    if missing:
+        return jsonify({"status": "error", "missing": missing}), 400
     conn = get_db_connection()
     # v2 schema: SafeZones is UNIQUE(patient_id, name); legacy endpoint manages the 'Home' zone.
     conn.execute('''
@@ -254,6 +272,13 @@ def delete_reminder(reminder_id):
 def set_geofence_v2():
     """Create/update a NAMED safe zone (home, park, temple...). One row per zone."""
     data = request.get_json() or {}
+    # Accept short aliases (lat/lng/radius_m) for robustness.
+    if 'center_lat' not in data and 'lat' in data:
+        data['center_lat'] = data['lat']
+    if 'center_lng' not in data and 'lng' in data:
+        data['center_lng'] = data['lng']
+    if 'radius_meters' not in data and 'radius_m' in data:
+        data['radius_meters'] = data['radius_m']
     required = ('patient_id', 'center_lat', 'center_lng')
     missing = [f for f in required if f not in data]
     if missing:
