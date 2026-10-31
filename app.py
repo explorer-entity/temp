@@ -1,8 +1,12 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
+import os
 import sqlite3
 from flask_cors import CORS
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
 def get_db_connection():
@@ -12,7 +16,7 @@ def get_db_connection():
 
 @app.route('/')
 def home():
-    return "Hello, Nexus Prime!"
+    return send_from_directory(STATIC_DIR, "home.html")
 
 @app.route('/api/set_stage', methods=['POST'])
 def set_stage():
