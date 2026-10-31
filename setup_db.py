@@ -75,18 +75,27 @@ CREATE TABLE IF NOT EXISTS Alerts (
 
 
 # -----------------------------
-# Safe Zones / Geofences
+# Safe Zones / Geofences (v2: multiple NAMED zones per patient)
 # -----------------------------
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS SafeZones (
-    patient_id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id INTEGER NOT NULL,
+    name TEXT NOT NULL DEFAULT 'Home',
     center_lat REAL NOT NULL,
     center_lng REAL NOT NULL,
     radius_meters REAL NOT NULL DEFAULT 200,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(patient_id, name),
     FOREIGN KEY (patient_id) REFERENCES Users(id)
 )
 ''')
+
+# Migrate a legacy v1 SafeZones table (patient_id as PRIMARY KEY, no name column)
+try:
+    cursor.execute("ALTER TABLE SafeZones ADD COLUMN name TEXT NOT NULL DEFAULT 'Home'")
+except sqlite3.OperationalError:
+    pass  # column already exists (fresh v2 DB or already migrated)
 
 
 # -----------------------------
