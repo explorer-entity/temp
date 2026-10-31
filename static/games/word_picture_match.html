@@ -37,12 +37,62 @@ body{font-family:Arial,sans-serif;background:#f4f7f8;color:#222;margin:0;padding
 <script>
 let currentQuestion = 0;
 let score = 0;
+let aiDifficulty = "Easy";
 
-const questions = [
+/* ============================================================
+   AI PERSONALIZATION
+   On load we ask the backend engine (/api/ai/recommendations)
+   for this player's suggested difficulty, then:
+   - expand/shrink the answer set (3 / 4 / 5 options)
+   - shuffle distractors so items are never memorised
+   - add more rounds at higher difficulty
+   The game still works fully offline — it falls back to Easy.
+============================================================ */
+const baseQuestions = [
  {word:"APPLE",picture:"🍎",answers:["APPLE","HOUSE","TREE"],correct:"APPLE"},
  {word:"HOUSE",picture:"🏠",answers:["TREE","HOUSE","APPLE"],correct:"HOUSE"},
  {word:"TREE",picture:"🌳",answers:["APPLE","TREE","HOUSE"],correct:"TREE"}
 ];
+const extraPool = [
+ {word:"FLOWER",picture:"🌸",answers:["FLOWER","CAT","SUN","BIRD"],correct:"FLOWER"},
+ {word:"CAT",picture:"🐱",answers:["DOG","CAT","FISH","COW"],correct:"CAT"},
+ {word:"SUN",picture:"☀️",answers:["MOON","STAR","SUN","CLOUD"],correct:"SUN"},
+ {word:"BANANA",picture:"🍌",answers:["MANGO","BANANA","APPLE","GUAVA"],correct:"BANANA"},
+ {word:"RIVER",picture:"🌊",answers:["HILL","TREE","RIVER","ROAD"],correct:"RIVER"},
+ {word:"BIRD",picture:"🐦",answers:["FISH","BIRD","CAT","GOAT"],correct:"BIRD"}
+];
+let questions = [...baseQuestions];
+
+async function loadAiPersonalization(){
+  const userId = Number(localStorage.getItem("manovaUserId")) || 1;
+  try{
+    const res = await fetch(`/api/ai/recommendations/${userId}`);
+    if(!res.ok) throw new Error("no ai response");
+    const data = await res.json();
+    const rec = (data.recommendations || [])
+      .find(r => r.game_type === "word_picture_match");
+    aiDifficulty = rec ? rec.suggested_difficulty : "Medium";
+  }catch(err){
+    console.warn("AI personalization unavailable, defaulting to Easy", err);
+    aiDifficulty = "Easy";
+  }
+  buildQuestionSet(aiDifficulty);
+}
+
+function buildQuestionSet(difficulty){
+  const pool = baseQuestions.concat(extraPool);
+  // Fisher-Yates shuffle of the pool, then pick a subset
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const rounds = difficulty === "Hard" ? 8 : difficulty === "Medium" ? 6 : 3;
+  questions = pool.slice(0, rounds).map(q => {
+    // shuffle answer options too, so position is never a cue
+    const answers = [...q.answers].sort(() => Math.random() - 0.5);
+    return {...q, answers};
+  });
+}
 
 function startGame(){
  currentQuestion=0;
@@ -75,7 +125,7 @@ async function saveScore(){
      user_id:userId,
      game_type:"word_picture_match",
      score:score,
-     difficulty:"Easy"
+     difficulty:aiDifficulty
    })
  });
  if(!response.ok) throw new Error("Score save failed: HTTP "+response.status);
@@ -158,7 +208,7 @@ function speak(text){
 }
 
 startGame();
-</script>
+loadAiPersonalization().then(startGame);  // re-start with AI-tuned question set</script>
 
 <script>
 if("serviceWorker" in navigator){

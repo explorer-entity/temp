@@ -232,11 +232,19 @@
 
         <!-- Safe Zone / Geofence -->
         <div class="card">
-            <h2>🛡️ Safe Zone</h2>
+            <h2>🛡️ Safe Zones (Geofencing)</h2>
             <p style="font-size:14px; color:#666; margin-bottom:10px;">
-                Set an allowed area around the patient's last known location.
-                The backend will create an alert if the patient moves outside it.
+                Create multiple named safe zones (Home, Temple, Park...).
+                The backend alerts only when the patient is outside ALL zones.
             </p>
+
+            <div class="info-row">
+                <span class="label">Zone name</span>
+                <span class="value">
+                    <input type="text" id="zoneNameInput" value="Home"
+                        style="width:110px; padding:7px; border:1px solid #ccc; border-radius:7px;">
+                </span>
+            </div>
 
             <div class="info-row">
                 <span class="label">Radius</span>
@@ -249,8 +257,10 @@
 
             <button class="action-btn btn-call" style="width:100%; margin-top:12px;"
                     onclick="setGeofenceAtLastLocation()">
-                📍 Set Safe Zone Here
+                📍 Save Zone at Last Location
             </button>
+
+            <div id="zoneList" style="margin-top:10px;"></div>
 
             <div id="geofenceStatus" style="font-size:13px; color:#666; margin-top:10px;">
                 No safe zone loaded yet.
@@ -338,8 +348,9 @@
     let lastKnownLat = null;
     let lastKnownLng = null;
 
-    // Leaflet circle representing the saved safe zone.
-    let geofenceCircle = null;
+    // v2: one Leaflet circle per named safe zone + a movement trail layer.
+    let geofenceCircles = [];
+    let trailLayer = null;
 
     function initMap(lat = 28.6139, lng = 77.2090) {
         if (map) {
@@ -474,52 +485,79 @@
             .catch(err => console.error('Patient name lookup failed:', err));
     }
 
-    function drawGeofence(zone) {
-        if (!map || !zone) return;
+    function drawGeofences(zones) {
+        if (!map) return;
+        geofenceCircles.forEach(c => map.removeLayer(c));
+        geofenceCircles = [];
 
-        if (geofenceCircle) {
-            map.removeLayer(geofenceCircle);
-        }
-
-        geofenceCircle = L.circle(
-            [Number(zone.center_lat), Number(zone.center_lng)],
-            {
-                radius: Number(zone.radius_meters),
-                color: "#2c5f8a",
-                fillOpacity: 0.12
-            }
-        ).addTo(map);
+        zones.forEach(z => {
+            const circle = L.circle(
+                [Number(z.center_lat), Number(z.center_lng)],
+                { radius: Number(z.radius_meters), color: "#2c5f8a", fillOpacity: 0.12 }
+            ).addTo(map).bindPopup(`🛡️ ${z.name} (${Math.round(z.radius_meters)} m)`);
+            geofenceCircles.push(circle);
+        });
 
         document.getElementById("geofenceStatus").textContent =
-            `Safe zone: ${Math.round(zone.radius_meters)} m radius`;
+            zones.length ? `${zones.length} safe zone(s): ` + zones.map(z => z.name).join(", ")
+                         : "No safe zone set for this patient.";
+
+        const list = document.getElementById("zoneList");
+        list.innerHTML = "";
+        zones.forEach(z => {
+            const row = document.createElement("div");
+            row.className = "info-row";
+            const label = document.createElement("span");
+            label.className = "label";
+            label.textContent = `🛡️ ${z.name} — ${Math.round(z.radius_meters)} m`;
+            const del = document.createElement("button");
+            del.textContent = "✕";
+            del.className = "delete-reminder";
+            del.onclick = () => deleteZone(z.name);
+            row.appendChild(label);
+            row.appendChild(del);
+            list.appendChild(row);
+        });
+    }
+
+    async function deleteZone(name) {
+        try {
+            await fetch('/api/geofence/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patient_id: PATIENT_ID, name: name })
+            });
+            loadGeofence();
+        } catch (err) { console.error("Zone delete failed:", err); }
+    }
+
+    async function drawMovementTrail() {
+        if (!map) return;
+        try {
+            const res = await fetch(`/api/location_history/${PATIENT_ID}?limit=50`);
+            if (!res.ok) return;
+            const points = await res.json();
+            if (trailLayer) { map.removeLayer(trailLayer); trailLayer = null; }
+            if (points.length > 1) {
+                trailLayer = L.polyline(
+                    points.map(p => [Number(p.latitude), Number(p.longitude)]),
+                    { color: "#e67e22", weight: 3, dashArray: "6 6", opacity: 0.7 }
+                ).addTo(map);
+            }
+        } catch (err) { console.error("Trail fetch failed:", err); }
     }
 
     async function loadGeofence() {
         try {
-            const res = await fetch(`/api/geofence/${PATIENT_ID}`);
+            const res = await fetch(`/api/geofences/${PATIENT_ID}`);
             if (!res.ok) throw new Error(`Geofence request failed (${res.status})`);
-
-            const zone = await res.json();
-
-            if (zone) {
-                const radiusEl = document.getElementById("radiusInput");
-                if (document.activeElement !== radiusEl) {
-                    radiusEl.value = Math.round(zone.radius_meters);
-                }
-                    
-                drawGeofence(zone);
-            } else {
-                if (geofenceCircle && map) {
-                    map.removeLayer(geofenceCircle);
-                    geofenceCircle = null;
-                }
-                document.getElementById("geofenceStatus").textContent =
-                    "No safe zone set for this patient.";
-            }
+            const zones = await res.json();
+            drawGeofences(zones || []);
+            drawMovementTrail();
         } catch (err) {
             console.error("Geofence fetch failed:", err);
             document.getElementById("geofenceStatus").textContent =
-                "Could not load safe zone.";
+                "Could not load safe zones.";
         }
     }
 
@@ -530,6 +568,7 @@
         }
 
         const radius = Number(document.getElementById("radiusInput").value || 200);
+        const name = (document.getElementById("zoneNameInput").value || "Home").trim();
 
         if (!Number.isFinite(radius) || radius < 20) {
             alert("Please enter a radius of at least 20 meters.");
@@ -537,11 +576,12 @@
         }
 
         try {
-            const res = await fetch('/api/set_geofence', {
+            const res = await fetch('/api/set_geofence_v2', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     patient_id: PATIENT_ID,
+                    name: name,
                     center_lat: lastKnownLat,
                     center_lng: lastKnownLng,
                     radius_meters: radius
@@ -550,13 +590,7 @@
 
             if (!res.ok) throw new Error(`Set geofence failed (${res.status})`);
 
-            drawGeofence({
-                center_lat: lastKnownLat,
-                center_lng: lastKnownLng,
-                radius_meters: radius
-            });
-
-            alert("Safe zone set successfully.");
+            loadGeofence();
         } catch (err) {
             console.error("Set geofence failed:", err);
             alert("Could not set the safe zone. Check that the Flask server is running.");

@@ -926,8 +926,40 @@ function startGame() {
     document.getElementById("endScreen").classList.add("hidden");
     document.getElementById("gameScreen").classList.remove("hidden");
 
+    applyAiStartingDifficulty();  // AI personalization: begin at recommended level
     loadQuestion();
 }
+
+
+/* =========================
+   AI PERSONALIZATION
+   Fetch this player's recommended starting difficulty from the
+   backend engine and jump straight to it (instead of always
+   starting at Easy). Falls back silently if offline / no data.
+========================= */
+let aiSuggestedDifficulty = null;   // "Easy" | "Medium" | "Hard"
+
+async function fetchAiPersonalization() {
+    const userId = Number(localStorage.getItem("manovaUserId")) || 1;
+    try {
+        const res = await fetch(`/api/ai/recommendations/${userId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const rec = (data.recommendations || [])
+            .find(r => r.game_type === "story_detective");
+        if (rec) aiSuggestedDifficulty = rec.suggested_difficulty;
+    } catch (err) {
+        console.warn("AI personalization unavailable for Story Detective", err);
+    }
+}
+
+function applyAiStartingDifficulty() {
+    if (aiSuggestedDifficulty === "Medium") difficulty = 1;
+    else if (aiSuggestedDifficulty === "Hard") difficulty = 2;
+    else difficulty = 0;
+}
+
+fetchAiPersonalization();
 
 
 /* =========================
