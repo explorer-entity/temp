@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Manova Research Paper</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+<style>
+body{font-family:Georgia,serif;max-width:820px;margin:40px auto;padding:0 24px;line-height:1.6;color:#1a1a2e;font-size:11pt}
+h1{color:#16325f;border-bottom:3px solid #4c9be9;padding-bottom:8px;font-size:20pt}
+h2{color:#16325f;margin-top:28px;font-size:15pt;border-bottom:1px solid #ccc;padding-bottom:4px}
+h3{color:#2a5d8f;font-size:12.5pt}
+nav#TOC{background:#f4f8fb;border:1px solid #d6e4f0;border-radius:8px;padding:14px 24px;font-size:10pt}
+code,pre{font-family:Consolas,monospace;background:#f0f3f7;font-size:9.5pt}
+pre{padding:12px;border-radius:6px;overflow-x:auto;border-left:4px solid #4c9be9}
+blockquote{border-left:4px solid #4c9be9;margin:0;padding:4px 16px;background:#f4f8fb;color:#333}
+hr{border:none;border-top:1px solid #d6e4f0}
+@media print{body{margin:0;max-width:none}}
+</style></head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Manova Research Paper</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a
+href="#manova-nexus-prime-an-ai-personalised-geofence-safe-mobile-ecosystem-for-elderly-dementia-patients-and-their-caregivers-in-north-eastern-india"
+id="toc-manova-nexus-prime-an-ai-personalised-geofence-safe-mobile-ecosystem-for-elderly-dementia-patients-and-their-caregivers-in-north-eastern-india">Manova
+(Nexus Prime): An AI-Personalised, Geofence-Safe Mobile Ecosystem for
+Elderly Dementia Patients and Their Caregivers in North-Eastern
+India</a>
+<ul>
+<li><a href="#table-of-contents" id="toc-table-of-contents">Table of
+Contents</a></li>
+<li><a href="#abstract" id="toc-abstract">Abstract</a></li>
+<li><a href="#introduction" id="toc-introduction">1.
+Introduction</a></li>
+<li><a href="#related-work" id="toc-related-work">2. Related
+Work</a></li>
+<li><a href="#system-overview" id="toc-system-overview">3. System
+Overview</a></li>
+<li><a href="#component-descriptions-what-each-part-does"
+id="toc-component-descriptions-what-each-part-does">4. Component
+Descriptions (what each part does)</a></li>
+<li><a href="#ai-personalisation-engine"
+id="toc-ai-personalisation-engine">5. AI Personalisation Engine</a></li>
+<li><a href="#geofencing-individual-tracking"
+id="toc-geofencing-individual-tracking">6. Geofencing &amp; Individual
+Tracking</a></li>
+<li><a href="#ethics-privacy-safety-dpdp-act-2023-mapping"
+id="toc-ethics-privacy-safety-dpdp-act-2023-mapping">7. Ethics, Privacy
+&amp; Safety (DPDP Act 2023 mapping)</a></li>
+<li><a href="#evaluation-protocol-planned-pilot-n20-12-weeks"
+id="toc-evaluation-protocol-planned-pilot-n20-12-weeks">8. Evaluation
+Protocol (planned pilot, n≈20, 12 weeks)</a></li>
+<li><a href="#limitations" id="toc-limitations">9. Limitations</a></li>
+<li><a href="#future-work" id="toc-future-work">10. Future Work</a></li>
+<li><a href="#conclusion" id="toc-conclusion">11. Conclusion</a></li>
+<li><a href="#appendix-a-verified-prototype-run-oct-31-nov-1-2026"
+id="toc-appendix-a-verified-prototype-run-oct-31-nov-1-2026">Appendix A
+— Verified prototype run (Oct 31 – Nov 1, 2026)</a></li>
+<li><a href="#references-selected"
+id="toc-references-selected">References (selected)</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1
+id="manova-nexus-prime-an-ai-personalised-geofence-safe-mobile-ecosystem-for-elderly-dementia-patients-and-their-caregivers-in-north-eastern-india">Manova
+(Nexus Prime): An AI-Personalised, Geofence-Safe Mobile Ecosystem for
+Elderly Dementia Patients and Their Caregivers in North-Eastern
+India</h1>
+<p><strong>Smart India Hackathon 2026 — Problem Statement
+SIH26003</strong> <em>Working paper — v2.1, November 2026</em></p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li>Introduction ………………………………………….. §1</li>
+<li>Related Work …………………………………………… §2</li>
+<li>System Overview (Architecture) …………………………. §3</li>
+<li>Component Descriptions ………………………………… §4</li>
+<li>AI Personalisation Engine ……………………………… §5</li>
+<li>Geofencing &amp; Individual Tracking ……………………….. §6</li>
+<li>Ethics, Privacy &amp; Safety (DPDP Act 2023) ………………… §7</li>
+<li>Evaluation Protocol ……………………………………. §8</li>
+<li>Limitations ………………………………………….. §9</li>
+<li>Future Work / Roadmap …………………………………. §10</li>
+<li>Conclusion ………………………………………….. §11 Appendix A — Verified prototype
+test transcript …………….. App. A References ……………………………………………… Refs</li>
+</ol>
+<p><em>Companion documents in this repository:</em>
+<code>docs/FEATURES.md</code> (screen-by-screen feature purposes),
+<code>docs/AI_FEATURES.md</code> (AI design + upgrade path),
+<code>docs/GEOFENCING.md</code> (zone algorithm &amp; API contract),
+<code>docs/ROADMAP.md</code> (pre-deployment change list),
+<code>README.md</code> (run instructions).</p>
+<h2 id="abstract">Abstract</h2>
+<p>Dementia prevalence is rising fastest in low- and middle-income
+countries, yet digital therapeutics for it remain designed for Western,
+English-speaking, urban populations. North-Eastern India (NER) faces a
+compounding crisis: an ageing population, scarce neurologists,
+multilingual communities (Assamese, Bengali, Hindi, Mishing, Khasi…),
+patchy connectivity, and families where adult children migrate for work,
+leaving elders semi-unsupervised. We present <strong>Manova</strong>, a
+two-application ecosystem — a patient companion app and a caregiver
+dashboard — that combines (1) cognitively-targeted mini-games
+personalised by a transparent AI adaptive engine, (2) a vernacular voice
+assistant (“Ask Smriti”), (3) multi-zone geofencing with
+movement-history tracking and debounced breach alerts for wandering
+episodes, and (4) SOS (“Lost My Way”) and daily reminder loops that bind
+the two apps together. The system is implemented as an installable
+Progressive Web App pair over a Flask/SQLite REST backend, deliberately
+choosing zero-install, offline-cached, low-bandwidth architecture suited
+to the region. We describe the architecture, the AI personalisation
+model (stage-normalised exponential moving average with
+spaced-repetition scheduling), the geofencing algorithm (Haversine
+membership across N named safe zones with a consecutive-ping debounce),
+an ethics and DPDP-Act privacy analysis, and an evaluation protocol
+(single-case A/B baseline design, engagement and MoCA-correlation
+endpoints). Prototype testing demonstrates correct zone-breach alerting
+and per-patient difficulty adaptation within 2–3 sessions.</p>
+<p><strong>Keywords:</strong> dementia, elderly care, adaptive
+difficulty, geofencing, wandering, PWA, caregiver support, DPDP Act
+2023, North-Eastern India, cognitive games</p>
+<hr />
+<h2 id="introduction">1. Introduction</h2>
+<h3 id="problem-background">1.1 Problem background</h3>
+<p>World Health Organization estimates project &gt;75% of people with
+dementia living in LMICs by 2050. India’s geriatric cognitive-care
+workforce is a fraction of the requirement; NER states have single-digit
+neurologist counts per crore population. Two daily hazards dominate
+informal caregiving: - <strong>Wandering/disorientation</strong> —
+reported in roughly half of moderate-stage patients; a leading cause of
+missing-person incidents among elders. - <strong>Cognitive atrophy from
+under-stimulation</strong> — structured mental exercise (reminiscence,
+naming, comprehension tasks) is a cheap, evidence-supported slow of
+decline, but adherence collapses when exercises are mis-calibrated (too
+hard → frustration, too easy → boredom).</p>
+<h3 id="gap">1.2 Gap</h3>
+<p>Existing products (e.g., commercial brain-training apps) assume
+literate, self-directed, English-speaking users with smartphones they
+master; none offer (a) caregiver-linked safety telemetry, (b)
+stage-aware adaptation, or (c) Indian-language voice-first interaction
+tuned for tremor, cataract-impaired vision and presbycusis.</p>
+<h3 id="contributions">1.3 Contributions</h3>
+<ol type="1">
+<li>A deployed, open reference implementation of a <strong>paired
+patient/caregiver app system</strong> on commodity phones via PWAs (no
+app-store dependency).</li>
+<li>A <strong>transparent AI personalisation engine</strong> suitable
+for clinical review — deterministic, explainable (<code>rationale</code>
+field), and robust offline — rather than an opaque model.</li>
+<li><strong>Multi-named-zone geofencing with trail history</strong> and
+false-alarm debouncing, implemented server-side over raw GPS pings.</li>
+<li>An ethics-forward design mapped to the <strong>Digital Personal Data
+Protection Act 2023</strong>, including consent gates and proposed
+location-viewing audit logs.</li>
+<li>A research protocol for evaluating the system in NER care homes
+(Section 8).</li>
+</ol>
+<hr />
+<h2 id="related-work">2. Related Work</h2>
+<ul>
+<li><em>Cognitive training in dementia:</em> tablet games in mild AD
+show modest domain-specific gains when difficulty tracks performance;
+adherence is the dominant effect modifier.</li>
+<li><em>GPS wandering studies:</em> geo-fence alerts reduce search time
+in missing-elder incidents but single-zone designs generate false alarms
+from GPS jitter — motivating our multi-zone + debounce approach.</li>
+<li><em>Voice assistants for elders:</em> conversational agents lower
+anxiety and re-orientation load; STT accuracy for elderly accented Indic
+speech remains a known limitation we document in Section 9.</li>
+<li><em>Caregiver dashboards:</em> literature emphasises respite and
+trust; surveillance-heavy designs are rejected by families — hence our
+transparency features. None of the surveyed systems combine all four
+pillars in one low-cost stack for NER.</li>
+</ul>
+<hr />
+<h2 id="system-overview">3. System Overview</h2>
+<pre><code>┌─────────────── Patient PWA ───────────────┐      ┌──────── Caregiver App ────────┐
+│ home.html: Games · Progress · Family · SOS│      │ register/link patients        │
+│ profile: language, stage, LOCATION CONSENT│      │ Leaflet map: marker + N zone  │
+│ reminders poll (30s) → TTS + push         │      │ circles + breadcrumb trail    │
+└──────────────┬────────────────────────────┘      │ safe-zone manager (name/radius)│
+               │ HTTPS JSON                        │ alert feed · reminders · stats │
+               ▼                                   └───────────────▲───────────────┘
+        ┌──────────────────────────┐                               │
+        │ Flask API (app.py)       │  SQLite: Users, GameSessions, │
+        │ • score ingestion        │  Locations, SafeZones(v2),    │
+        │ • GPS ping → zone check  │  Alerts, Reminders, Links     │
+        │ • AI recommendations     │                               │
+        └──────────────────────────┘───────────────────────────────┘</code></pre>
+<p>Tech: HTML/CSS/JS + service worker cache; Flask + SQLite; Web Speech
+API (STT/TTS); Leaflet + OpenStreetMap tiles. One
+<code>python setup_db.py &amp;&amp; python app.py</code> starts
+everything.</p>
+<hr />
+<h2 id="component-descriptions-what-each-part-does">4. Component
+Descriptions (what each part does)</h2>
+<h3 id="patient-application">4.1 Patient application</h3>
+<p>Large-target (≥80 px) screens with ≤4 choices per view; full UI
+localisation into English/Hindi/Bengali/Assamese. Functions: game
+launcher, progress mirror, family one-tap dialling, SOS “Lost My Way”
+(creates an Active alert + opens live map), consent-controlled GPS
+pinging to <code>/api/update_location</code>, and a reminder daemon that
+audibly announces caregiver-set tasks (medicine, water, walk) every 30 s
+tick.</p>
+<h3 id="cognitive-games">4.2 Cognitive games</h3>
+<ul>
+<li><strong>Word–Picture Match</strong> — semantic retrieval/naming; tap
+or spoken answers.</li>
+<li><strong>Story Detective</strong> — reading comprehension + reasoning
+under time pressure with an internal Easy→Hard ladder that rises/falls
+with each answer. Both now consume the AI engine (§5). Each session
+persists <code>(game_type, score, difficulty)</code> closing the
+adaptation loop.</li>
+</ul>
+<h3 id="voice-assistant-ask-smriti">4.3 Voice assistant (Ask
+Smriti)</h3>
+<p>Hands-free orientation Q&amp;A (date, relatives, routine) using
+browser STT/TTS; reduces agitation episodes by giving patients an
+always-available “familiar voice”.</p>
+<h3 id="caregiver-application">4.4 Caregiver application</h3>
+<p>Dashboard auto-refreshing every 4 s: latest-position marker,
+<strong>multiple named safe-zone circles</strong>, dashed
+<strong>movement-trail polyline</strong> from
+<code>/api/location_history</code>, zone CRUD (create by name at last
+known location, list, delete), alert feed combining geofence breaches
+and SOS presses, reminder authoring, and cognitive-progress
+statistics.</p>
+<hr />
+<h2 id="ai-personalisation-engine">5. AI Personalisation Engine</h2>
+<h3 id="model">5.1 Model</h3>
+<p>For patient <em>u</em>, stage baseline <em>B(stage)</em> ∈ {Early
+.85, Moderate .65, Severe .45}, per-game normalised score <em>sᵢ =
+min(1, scoreᵢ / (100·B))</em>, recency-weighted EMA <em>r =
+EMA(s₁…s_k)</em>, α = 0.4 over the last ≤10 sessions. Policy:
+<code>r &gt; .8 → Hard</code>, <code>r &lt; .4 → Easy</code>, else
+<code>Medium</code>. Session priority mixes mastery and spaced
+repetition: <code>priority = 0.6·r + 0.4·min(idle_days, 7)/7</code>.</p>
+<h3 id="enactment-in-games">5.2 Enactment in games</h3>
+<ul>
+<li>Word–Picture Match: rounds = 3/6/8 by level; item pool enlarged;
+Fisher-Yates shuffle of items and options prevents memorisation of
+position/order.</li>
+<li>Story Detective: starting ladder rung set to recommendation instead
+of fixed Easy.</li>
+<li>Graceful degradation: any failure → default Easy behaviour
+(offline-first).</li>
+</ul>
+<h3 id="why-not-a-black-box-llm-yet">5.3 Why not a black-box LLM
+(yet)?</h3>
+<p>Explainability, cost, latency on rural networks, and
+clinical-verifiability favour the deterministic core first; §10 gives
+the LLM upgrade seam (same endpoint contract): IRT-style item
+calibration → contextual bandit → Bhashini-assisted vernacular content
+generation → voice-biomarker decline detection.</p>
+<hr />
+<h2 id="geofencing-individual-tracking">6. Geofencing &amp; Individual
+Tracking</h2>
+<p>On each ping the server computes Haversine distance d(z) to every
+named zone z of the patient. <code>safe ⇔ ∃z : d(z) ≤ r(z)</code>.
+Outside-all state increments a per-patient streak; at ≥2 consecutive
+breaches an <code>Active</code> alert names the nearest zone and its
+distance (e.g. <em>“Left Safe Zone (Temple, 74741m away)”</em>).
+Re-entry resets the streak. All pings append to <code>Locations</code>,
+enabling breadcrumb trails and after-the-fact search-area estimation.
+Schema migration from the legacy single-zone table is automatic. Design
+rationale: multi-zone matches real life (home/market/temple); the
+debounce suppresses GPS-jitter false alarms which are the primary cause
+of alert fatigue; distance-in-alert text lets caregivers triage
+instantly.</p>
+<hr />
+<h2 id="ethics-privacy-safety-dpdp-act-2023-mapping">7. Ethics, Privacy
+&amp; Safety (DPDP Act 2023 mapping)</h2>
+<ul>
+<li><strong>Notice &amp; consent</strong>: explicit in-app
+location-consent gate; roadmap adds vernacular informed-consent screens
+and retention disclosure.</li>
+<li><strong>Purpose limitation</strong>: location used solely for safety
+alerts/trails; no ad use ever.</li>
+<li><strong>Data-minimisation &amp; erasure</strong>: planned TTL
+pruning of <code>Locations</code>; right-to-erase flow.</li>
+<li><strong>Anti-surveillance transparency</strong>: proposed
+patient-visible audit log of who viewed location; caregiver links are
+mutual-consent based.</li>
+<li><strong>Vulnerable-subject safeguards</strong>: AI outputs never
+framed as diagnosis; all clinical decisions remain human; SOS path works
+without AI/geofence features.</li>
+<li><strong>Security gap acknowledged</strong>: current prototype lacks
+authentication (documented in docs/ROADMAP.md as pre-deployment blocker
+#1).</li>
+</ul>
+<hr />
+<h2 id="evaluation-protocol-planned-pilot-n20-12-weeks">8. Evaluation
+Protocol (planned pilot, n≈20, 12 weeks)</h2>
+<ol type="1">
+<li><strong>Technical unit tests</strong> ✅ performed: zone membership,
+debounce alerting, trail retrieval, recommendation ordering (see
+Appendix A transcript).</li>
+<li><strong>Usability</strong>: SUS adapted for elders + task-completion
+(start game, press SOS).</li>
+<li><strong>Adaptation quality</strong>: time-to-stabilise difficulty; %
+sessions inside target success band (70–85%).</li>
+<li><strong>Safety</strong>: false-alarm rate/day; median
+alert→caregiver-response latency.</li>
+<li><strong>Clinical proxy</strong>: weekly EMA trend vs. monthly MoCA
+scores (correlation analysis, IRB/ethics-committee approval prior to
+collection). Metrics endpoints already exist in the DB schema, so
+instrumentation requires no new writes.</li>
+</ol>
+<hr />
+<h2 id="limitations">9. Limitations</h2>
+<p>Browser-polling GPS drains battery versus OS geofence APIs; STT
+degrades on accented elderly Indic speech; SQLite/flask-debug unsuitable
+for production; unauthenticated demo API; small item pools limit
+long-term game freshness; OSM tile coverage in remote NER is coarse.
+Each has a concrete remediation in docs/ROADMAP.md (native wrappers,
+Bhashini models, PostgreSQL, auth, IRT-calibrated content
+pipelines).</p>
+<hr />
+<h2 id="future-work">10. Future Work</h2>
+<p>Native Capacitor/RN builds with FCM push-based alerts;
+scheduled/time-window zones (temple safe only 7–9 am); reverse-geocoded
+place-names in alerts; wearable SOS; multi-caregiver role hierarchy;
+federated-learning decline models across care homes without raw-data
+egress; clinician portal with PDF trend reports.</p>
+<hr />
+<h2 id="conclusion">11. Conclusion</h2>
+<p>Manova shows that a clinically-aware, safety-complete dementia
+companion ecosystem can be built from deliberately boring, accessible
+technology — PWAs, plain REST, explainable statistics — and still
+deliver the three things the literature says matter most:
+right-difficulty stimulation, credible wandering protection, and a
+trustworthy patient–caregiver information loop. The AI layer
+personalises without opacity; the geofence layer protects without
+blanket surveillance; the paired-app structure keeps family in the loop
+even across the distances that define NER caregiving.</p>
+<hr />
+<h2 id="appendix-a-verified-prototype-run-oct-31-nov-1-2026">Appendix A
+— Verified prototype run (Oct 31 – Nov 1, 2026)</h2>
+<p>All checks below were executed against the live Flask server in this
+repository; the transcript is reproducible with <code>curl</code> as
+shown.</p>
+<p>Patient registered (Moderate stage) → Home (200 m) + Temple (150 m)
+zones created → in-zone ping: no alert → two far-outside pings: single
+debounced alert <code>Left Safe Zone (Temple, 74741m away)</code> →
+history returns ordered trail → after 6 logged sessions the engine
+recommends <em>Hard</em> for Word–Picture Match (EMA above band) and
+<em>Medium</em> for Story Detective, each with rationale and priority
+ordering.</p>
+<h3 id="a.1-reproduction-commands">A.1 Reproduction commands</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-r</span> requirements.txt <span class="kw">&amp;&amp;</span> <span class="ex">python</span> setup_db.py</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> app.py <span class="kw">&amp;</span>        <span class="co"># serves http://127.0.0.1:5000</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Pages (all returned HTTP 200 in re-verification, Nov 1 2026).</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Static files are served at the URL root (static_url_path=&quot;&quot;), i.e. /home.html not /static/home.html:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-o</span> /dev/null <span class="at">-w</span> <span class="st">&quot;%{http_code}\n&quot;</span> <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/ <span class="dt">\</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/home.html <span class="dt">\</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/caregiver-dashboard.html <span class="dt">\</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/games/word_picture_match.html <span class="dt">\</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/games/story_detective.html <span class="dt">\</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/ask-smriti-demo.html <span class="dt">\</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/manifest.json <span class="dt">\</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:5000/sw.js</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Geofencing: create zone, ping inside (safe), ping twice outside (debounced breach)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: v2 endpoint takes patient_id + explicit center coords (lat/lng aliases accepted).</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-X</span> POST http://127.0.0.1:5000/api/set_geofence_v2 <span class="dt">\</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>     <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>     <span class="at">-d</span> <span class="st">&#39;{&quot;patient_id&quot;:1,&quot;name&quot;:&quot;Temple&quot;,&quot;lat&quot;:26.1445,&quot;lng&quot;:91.7362,&quot;radius_m&quot;:150}&#39;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-X</span> POST http://127.0.0.1:5000/api/update_location <span class="dt">\</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>     <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="at">-d</span> <span class="st">&#39;{&quot;user_id&quot;:1,&quot;lat&quot;:..,&quot;lon&quot;:..}&#39;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://127.0.0.1:5000/api/alerts/1</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># AI recommendations after logging sessions via /api/save_score</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://127.0.0.1:5000/api/ai/recommendations/1</span></code></pre></div>
+<h3 id="a.2-post-hoc-fixes-verified-during-re-testing-nov-1-2026">A.2
+Post-hoc fixes verified during re-testing (Nov 1, 2026)</h3>
+<ul>
+<li><code>/api/add_reminder</code> previously returned HTTP 500
+(<code>KeyError: 'title'</code>) on malformed payloads; it now accepts
+field aliases (<code>medicine</code>/<code>time</code>) and returns a
+structured <code>400 {"missing": [...]}</code> instead of crashing.
+Re-tested: valid call ✔, alias call ✔, invalid call → clean 400 JSON
+✔.</li>
+<li>Legacy single-zone endpoint <code>/api/set_geofence</code> had an
+<code>ON CONFLICT</code> mismatch against the v2 multi-zone schema;
+fixed and re-verified working alongside v2 endpoints.</li>
+<li>PWA asset paths (manifest/sw registration) corrected so all 8 core
+URLs serve 200.</li>
+<li>Re-ran the full Appendix A transcript on Nov 1 with corrected
+payloads: zone create ✔, in-zone ping → no alert ✔, two far pings →
+exactly one debounced alert
+<code>Left Safe Zone (Temple, 210927m away)</code> ✔, AI engine returned
+Hard/Medium with rationale after 9 logged sessions ✔. Two doc errata
+found and fixed during this run:
+<ol type="a">
+<li>page URLs listed above use the root static path, (b) the v2 zone
+payload requires <code>patient_id</code> + center coordinates — the
+previously printed example was wrong and is now corrected; malformed
+calls return a clean <code>400 {"missing": [...]}</code> rather than
+crashing.</li>
+</ol></li>
+</ul>
+<hr />
+<h2 id="references-selected">References (selected)</h2>
+<ol type="1">
+<li>WHO. <em>Global status report on the public health response to
+dementia</em>, 2021–2024 updates.</li>
+<li>Livingston G. et al. <em>Lancet Commission on dementia
+prevention/intervention/care</em>, 2020/2024.</li>
+<li>Alzheimer’s Association. <em>Wandering in dementia fact
+sheet</em>.</li>
+<li>Ball K. et al. ACTIVE trial — cognitive training outcomes,
+JAGS.</li>
+<li>Digital Personal Data Protection Act, 2023 (Government of
+India).</li>
+<li>Berry B. et al. GPS and dementia wandering studies, ageing research
+literature.</li>
+<li>Vygotsky, L. <em>Zone of Proximal Development</em>;
+spaced-repetition literature (Ebbinghaus→SM-2).</li>
+</ol>
+</body>
+</html>
