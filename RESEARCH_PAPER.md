@@ -1,9 +1,29 @@
 # Manova (Nexus Prime): An AI-Personalised, Geofence-Safe Mobile Ecosystem for Elderly Dementia Patients and Their Caregivers in North-Eastern India
 
 **Smart India Hackathon 2026 — Problem Statement SIH26003**
-*Working paper — v2.0, October 2026*
+*Working paper — v2.1, November 2026*
 
 ---
+
+## Table of Contents
+1. Introduction .................................................. §1
+2. Related Work ................................................... §2
+3. System Overview (Architecture) ............................... §3
+4. Component Descriptions ....................................... §4
+5. AI Personalisation Engine .................................... §5
+6. Geofencing & Individual Tracking ............................. §6
+7. Ethics, Privacy & Safety (DPDP Act 2023) ..................... §7
+8. Evaluation Protocol ........................................... §8
+9. Limitations .................................................. §9
+10. Future Work / Roadmap ........................................ §10
+11. Conclusion .................................................. §11
+Appendix A — Verified prototype test transcript ................. App. A
+References ...................................................... Refs
+
+*Companion documents in this repository:* `docs/FEATURES.md` (screen-by-screen feature
+purposes), `docs/AI_FEATURES.md` (AI design + upgrade path), `docs/GEOFENCING.md`
+(zone algorithm & API contract), `docs/ROADMAP.md` (pre-deployment change list),
+`README.md` (run instructions).
 
 ## Abstract
 Dementia prevalence is rising fastest in low- and middle-income countries, yet digital
