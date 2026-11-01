@@ -160,6 +160,7 @@
         font-size: 16px;
     }
 </style>
+<script src="/static/common.js"></script>
 </head>
 <body>
 
@@ -177,21 +178,20 @@
 
         <div id="setupStep1">
             <p style="font-size:14px; color:#666; margin-bottom:10px;">
-                Register as a caregiver to get your own ID and connect to a patient.
+                Create a caregiver account, or log in if you already have one.
             </p>
-            <input type="text" id="caregiverNameInput" placeholder="Your name"
-                style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
-            <button class="action-btn btn-call" style="width:100%;" onclick="registerCaregiver()">
-                Register as Caregiver
-            </button>
+            <input type="text" id="caregiverNameInput" placeholder="Your name (new accounts)" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <input type="text" id="caregiverUserInput" placeholder="Username" autocomplete="username" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <input type="password" id="caregiverPassInput" placeholder="Password (6+ characters)" autocomplete="current-password" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <button class="action-btn btn-call" style="width:100%; margin-bottom:8px;" onclick="registerCaregiver()">Create account</button>
+            <button class="action-btn btn-history" style="width:100%;" onclick="loginCaregiver()">Log in</button>
         </div>
 
         <div id="setupStep2" style="display:none;">
             <p style="font-size:14px; color:#666; margin-bottom:10px;">
-                Your Caregiver ID: <strong id="caregiverIdText"></strong>
+                Ask the patient to open <b>Profile &rarr; Give a caregiver access</b> in their app and read you the 6-digit code.
             </p>
-            <input type="number" id="patientIdInput" placeholder="Patient ID to connect"
-                style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <input type="text" inputmode="numeric" maxlength="6" id="patientIdInput" placeholder="6-digit code from the patient" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
             <button class="action-btn btn-message" style="width:100%;" onclick="connectToPatient()">
                 Connect to Patient
             </button>
@@ -205,6 +205,7 @@
             <button class="action-btn btn-history" style="width:100%;" onclick="showSetupStep(2)">
                 + Connect Another Patient
             </button>
+            <button class="action-btn btn-history" style="width:100%; margin-top:8px;" onclick="logoutCaregiver()">Log out</button>
         </div>
     </div>
 
@@ -315,6 +316,19 @@
             </div>
         </div>
 
+        <!-- Clinician report -->
+        <div class="card">
+            <h2>🩺 Clinician Report</h2>
+            <div id="clinicalSummary" style="font-size:14px; margin-bottom:10px; color:#555;">Loading...</div>
+            <input type="number" id="mocaScore" min="0" max="30" placeholder="MoCA score (0-30)"
+                style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <input type="date" id="mocaDate"
+                style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+            <button class="action-btn btn-message" style="width:100%; margin-bottom:8px;" onclick="addMoca()">+ Save MoCA score</button>
+            <button class="action-btn btn-history" style="width:100%;" onclick="openReport()">📄 Open printable report</button>
+            <div id="metricsBox" style="font-size:13px; color:#666; margin-top:10px;"></div>
+        </div>
+
         <!-- Quick Actions -->
         <div class="card">
             <h2>⚡ Quick Actions</h2>
@@ -343,6 +357,7 @@
     let CAREGIVER_ID = Number(localStorage.getItem("manovaCaregiverId")) || null;
 
     let map, marker;
+    let patientReady = false;
 
     // Latest patient coordinates received from Flask.
     let lastKnownLat = null;
@@ -378,56 +393,65 @@
         }
     }
 
-    function registerCaregiver() {
-        const name = document.getElementById("caregiverNameInput").value.trim();
+    const CG_TOKEN_KEY = "manovaCgToken";
 
-        if (!name) {
-            alert("Please enter your name.");
-            return;
-        }
-
-        fetch('/api/register_caregiver', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: name })
-        })
-        .then(res => res.json())
-        .then(result => {
-            CAREGIVER_ID = result.user_id;
-            localStorage.setItem("manovaCaregiverId", CAREGIVER_ID);
-            showSetupStep(2);
-        })
-        .catch(err => {
-            console.error('Caregiver registration failed:', err);
-            alert('Could not register right now — check the server is running.');
-        });
+    function finishLogin(result) {
+        CAREGIVER_ID = result.user_id;
+        localStorage.setItem("manovaCaregiverId", CAREGIVER_ID);
+        localStorage.setItem(CG_TOKEN_KEY, result.token);
+        loadLinkedPatients();
     }
 
-    function connectToPatient() {
-        const patientId = Number(document.getElementById("patientIdInput").value);
-
-        if (!patientId) {
-            alert("Please enter a valid patient ID.");
-            return;
-        }
-
-        fetch('/api/link_caregiver', {
+    function authRequest(url, payload) {
+        return fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                caregiver_id: CAREGIVER_ID,
-                patient_id: patientId
+            body: JSON.stringify(payload)
+        }).then(res => res.json().then(body => ({ ok: res.ok, body })));
+    }
+
+    function registerCaregiver() {
+        const name = document.getElementById("caregiverNameInput").value.trim();
+        const username = document.getElementById("caregiverUserInput").value.trim();
+        const password = document.getElementById("caregiverPassInput").value;
+        if (!username || password.length < 6) {
+            alert("Please enter a username and a password of at least 6 characters.");
+            return;
+        }
+        authRequest('/api/register_caregiver', { name: name || username, username, password })
+            .then(r => r.ok ? finishLogin(r.body) : alert(r.body.message || 'Could not create the account.'))
+            .catch(() => alert('Could not reach the server - check it is running.'));
+    }
+
+    function loginCaregiver() {
+        const username = document.getElementById("caregiverUserInput").value.trim();
+        const password = document.getElementById("caregiverPassInput").value;
+        authRequest('/api/login', { username, secret: password })
+            .then(r => r.ok && r.body.role === 'caregiver' ? finishLogin(r.body) : alert(r.body.message || 'Wrong username or password.'))
+            .catch(() => alert('Could not reach the server - check it is running.'));
+    }
+
+    function logoutCaregiver() {
+        localStorage.removeItem(CG_TOKEN_KEY);
+        localStorage.removeItem("manovaCaregiverId");
+        location.reload();
+    }
+    window.addEventListener("manova-auth-expired", logoutCaregiver);
+
+    function connectToPatient() {
+        const code = document.getElementById("patientIdInput").value.trim();
+        if (!/^\d{6}$/.test(code)) {
+            alert("Please enter the 6-digit code shown in the patient's app.");
+            return;
+        }
+        authRequest('/api/link_with_code', { code })
+            .then(r => {
+                if (!r.ok) { alert(r.body.message || 'That code is invalid or has expired.'); return; }
+                document.getElementById("patientIdInput").value = "";
+                PATIENT_ID = r.body.patient_id;
+                loadLinkedPatients();
             })
-        })
-        .then(res => res.json())
-        .then(() => {
-            document.getElementById("patientIdInput").value = "";
-            loadLinkedPatients();
-        })
-        .catch(err => {
-            console.error('Connect failed:', err);
-            alert('Could not connect right now — check the server is running.');
-        });
+            .catch(() => alert('Could not connect right now - check the server is running.'));
     }
 
     function loadLinkedPatients() {
@@ -465,6 +489,8 @@
                 }
 
                 showSetupStep(3);
+                patientReady = true;
+                connectStream();
                 loadData();
             })
             .catch(err => console.error('Loading linked patients failed:', err));
@@ -473,6 +499,7 @@
     function switchPatient() {
         PATIENT_ID = Number(document.getElementById("patientSelector").value);
         loadData();
+        loadClinical();
 
         fetch(`/api/caregiver/${CAREGIVER_ID}/patients`)
             .then(res => res.json())
@@ -661,7 +688,7 @@
             list.innerHTML = reminders.map(r => `
                 <div class="reminder-item">
                     <div class="reminder-main">
-                        <span class="reminder-time">⏰ ${r.reminder_time}</span>
+                        <span class="reminder-time">⏰ ${escapeHtml(r.reminder_time)}</span>
                         <span>${escapeHtml(r.title)}</span>
                     </div>
                     <button class="delete-reminder"
@@ -752,10 +779,26 @@
                 alerts.slice(0, 5).forEach(a => {
                     const div = document.createElement("div");
                     div.className = "alert-item" + (a.status === "Active" ? " active" : "");
-                    div.innerHTML =
-                        `<strong>${a.type}</strong><br><small>${a.timestamp} • ${a.status}</small>`;
+                    const title = document.createElement("strong");
+                    title.textContent = a.type;
+                    const meta = document.createElement("small");
+                    meta.textContent = `${a.timestamp} • ${a.status}` + (a.resolution === "false_alarm" ? " (false alarm)" : "");
+                    div.append(title, document.createElement("br"), meta);
+                    if (a.status === "Active") {
+                        const row = document.createElement("div");
+                        row.style.marginTop = "6px";
+                        [["✓ Handled", "resolved"], ["False alarm", "false_alarm"]].forEach(([label, res]) => {
+                            const b = document.createElement("button");
+                            b.className = "action-btn btn-history";
+                            b.style.marginRight = "6px";
+                            b.textContent = label;
+                            b.onclick = () => ackAlert(a.id, res);
+                            row.appendChild(b);
+                        });
+                        div.appendChild(row);
+                        hasActive = true;
+                    }
                     list.appendChild(div);
-                    if (a.status === "Active") hasActive = true;
                 });
 
                 badge.className = hasActive ? "status-badge alert" : "status-badge safe";
@@ -767,14 +810,81 @@
             await loadGeofence();
         await loadReminders();
     }
-    if (CAREGIVER_ID) {
+    /* ---- alert workflow ---- */
+    function ackAlert(id, resolution) {
+        authRequest(`/api/alerts/${id}/acknowledge`, { resolution }).then(() => loadData());
+    }
+
+    /* ---- live push (Server-Sent Events): alerts appear instantly, polling slows down ---- */
+    let sse = null, sseOk = false, tick = 0, lastClinical = 0;
+    function notifyAlert(m) {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "granted") {
+            new Notification("Manova alert: " + m.patient_name, { body: m.type });
+        } else if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }
+    function connectStream() {
+        const token = localStorage.getItem(CG_TOKEN_KEY);
+        if (sse || !token || !window.EventSource) return;
+        sse = new EventSource('/api/stream?token=' + encodeURIComponent(token));
+        sse.onopen = () => { sseOk = true; };
+        sse.onerror = () => { sseOk = false; };
+        sse.addEventListener('alert', ev => {
+            const m = JSON.parse(ev.data);
+            notifyAlert(m);
+            if (m.patient_id === PATIENT_ID) loadData();
+        });
+    }
+
+    /* ---- clinical: MoCA, trend nudge, response metrics, printable report ---- */
+    async function loadClinical() {
+        lastClinical = Date.now();
+        try {
+            const [cRes, mRes] = await Promise.all([fetch(`/api/clinical/${PATIENT_ID}`), fetch(`/api/metrics/${PATIENT_ID}`)]);
+            if (!cRes.ok) return;
+            const c = await cRes.json();
+            const box = document.getElementById("clinicalSummary");
+            box.textContent = "";
+            const last = c.moca.length ? c.moca[c.moca.length - 1] : null;
+            box.append(`${c.sessions} game sessions • ` + (last ? `latest MoCA ${last.moca_score}/30 (${last.assessed_on})` : "no MoCA entered"));
+            if (c.nudge) {
+                const n = document.createElement("div");
+                n.style.cssText = "background:#fff4e0; border-left:4px solid #f5a623; padding:8px; margin-top:8px;";
+                n.textContent = c.nudge;
+                box.appendChild(n);
+            }
+            if (mRes.ok) {
+                const m = await mRes.json();
+                document.getElementById("metricsBox").textContent =
+                    `Alerts: ${m.alerts_total} • false alarms: ${m.false_alarms} • median response: ` +
+                    (m.median_response_seconds === null ? "n/a" : Math.round(m.median_response_seconds) + " s");
+            }
+        } catch (err) { console.error("Clinical load failed:", err); }
+    }
+    function addMoca() {
+        const score = Number(document.getElementById("mocaScore").value);
+        const date = document.getElementById("mocaDate").value || undefined;
+        authRequest('/api/moca', { patient_id: PATIENT_ID, score, date })
+            .then(r => { if (!r.ok) alert(r.body.message || "Could not save"); else { document.getElementById("mocaScore").value = ""; loadClinical(); } });
+    }
+    function openReport() {
+        window.open(`/api/report/${PATIENT_ID}?token=` + encodeURIComponent(localStorage.getItem(CG_TOKEN_KEY)), "_blank");
+    }
+
+    if (CAREGIVER_ID && localStorage.getItem(CG_TOKEN_KEY)) {
         loadLinkedPatients();
     } else {
         showSetupStep(1);
     }
 
-    loadData();
-    setInterval(loadData, 4000);
+    setInterval(() => {
+        if (!patientReady) return;
+        tick++;
+        if (!sseOk || tick % 4 === 0) loadData();            // 4 s without push, ~16 s with push
+        if (Date.now() - lastClinical > 30000) loadClinical();
+    }, 4000);
 </script>
 </body>
 </html>

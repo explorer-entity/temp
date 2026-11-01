@@ -326,6 +326,7 @@
             #map { height: 400px; }
         }
     </style>
+<script src="/static/common.js"></script>
 </head>
 <body>
 <div class="app">
@@ -459,6 +460,23 @@
                 <p id="patientIdDisplay" style="font-size: 22px; font-weight: bold;">
                     Not registered yet — save your profile below
                 </p>
+            </div>
+            <div class="profile-field" id="privacyPanel">
+                <label>🔐 Privacy &amp; Caregivers</label>
+                <p id="pinNotice" style="display:none; font-size:18px; margin:6px 0;"></p>
+                <button type="button" class="location-toggle" onclick="makeLinkCode()">Give a caregiver access</button>
+                <p id="linkCodeBox" style="font-size:20px; font-weight:bold; margin:8px 0;"></p>
+                <div id="caregiverList"></div>
+                <button type="button" class="location-toggle" onclick="loadAccessLog()">Who viewed my data?</button>
+                <div id="accessLogBox" style="font-size:14px; margin:8px 0;"></div>
+                <button type="button" class="location-toggle" onclick="eraseData('locations')">Delete my location history</button>
+                <button type="button" class="location-toggle" onclick="eraseData('all')">Delete all my data</button>
+                <details style="margin-top:12px;">
+                    <summary>Already registered? Log in on this device</summary>
+                    <input id="loginId" type="number" placeholder="Patient ID" style="width:100%; margin:6px 0; padding:10px;">
+                    <input id="loginPin" type="password" inputmode="numeric" placeholder="4-digit PIN" style="width:100%; margin:6px 0; padding:10px;">
+                    <button type="button" class="location-toggle" onclick="loginOnThisDevice()">Log in</button>
+                </details>
             </div>
             <div class="profile-field">
                 <label for="profileLanguage">Language</label>
@@ -871,15 +889,12 @@
                     .addTo(map)
                     .bindPopup("📍 Your current location")
                     .openPopup();
-                fetch("/api/update_location", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        user_id: USER_ID,
-                        latitude: latitude,
-                        longitude: longitude
-                    })
-                }).catch(err => console.error("Location save failed:", err));
+                localStorage.setItem("manovaLastLoc", JSON.stringify({ lat: latitude, lng: longitude, t: Date.now() }));
+                if (profileLocationAllowed) manovaPost("/api/update_location", {  // only with consent; queued if offline
+                    user_id: USER_ID,
+                    latitude: latitude,
+                    longitude: longitude
+                });
                 status.textContent = "✓ Your current location has been found.";
                 speak("Your current location has been found.");
             },
@@ -949,24 +964,35 @@
     /* =========================
        SOS
     ========================= */
+    async function sendSos(type) {
+        const result = await manovaPost("/api/trigger_alert", { user_id: USER_ID, type: type });
+        if (!result.ok) offerSmsFallback(type);   // no internet (or rejected): SOS must never fail silently
+    }
+
+    function offerSmsFallback(type) {
+        const contact = (familyContacts || []).find(c => c.phone);
+        if (!contact) {
+            alert("No internet connection. Save a family phone number in Family Connect so SOS can send an SMS next time.");
+            return;
+        }
+        const loc = JSON.parse(localStorage.getItem("manovaLastLoc") || "null");
+        const where = loc ? " My last known location: https://maps.google.com/?q=" + loc.lat + "," + loc.lng : "";
+        const text = (type === "Emergency" ? "EMERGENCY - I need help." : "I am lost and need help.") + where;
+        if (confirm("No internet. Send your SOS by SMS to " + contact.name + "?")) {
+            window.location.href = "sms:" + contact.phone + "?body=" + encodeURIComponent(text);
+        }
+    }
+
     function lostMyWay() {
-        fetch("/api/trigger_alert", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: USER_ID, type: "Lost My Way" })
-        }).catch(err => console.error("Alert failed:", err));
-        alert("Lost My Way activated.\n\nThe patient's current location would be shared with saved family contacts.");
+        sendSos("Lost My Way");
+        alert("Lost My Way activated.\n\nYour caregivers have been alerted and your location is being shared.");
         showScreen("location");
         setTimeout(getLocation, 300);
     }
 
     function emergency() {
-        fetch("/api/trigger_alert", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: USER_ID, type: "Emergency" })
-        }).catch(err => console.error("Alert failed:", err));
-        alert("Emergency activated.\n\nSaved family and healthcare contacts would be alerted.");
+        sendSos("Emergency");
+        alert("Emergency activated.\n\nYour caregivers have been alerted.");
         speak("Emergency mode activated.");
     }
 
@@ -1107,6 +1133,8 @@
         selectGender(selectedGender);
         updateProfileLocationStatus();
         updatePatientIdDisplay();
+        showPin();
+        loadCaregivers();
     }
 
     function updatePatientIdDisplay() {
@@ -1165,10 +1193,14 @@
         .then(result => {
             USER_ID = result.user_id;
             localStorage.setItem("manovaUserId", USER_ID);
+            if (result.token) localStorage.setItem("manovaToken", result.token);
+            if (result.pin) localStorage.setItem("manovaPin", result.pin);
             updatePatientIdDisplay();
+            showPin();
             document.getElementById("profileMessage").textContent =
-                "✓ Profile saved. Your Patient ID is " + USER_ID +
-                " — share this with a caregiver to connect.";
+                "✓ Profile saved. Your Patient ID is " + USER_ID + " and your PIN is " + result.pin +
+                " — write them down. To connect a caregiver, tap Give a caregiver access.";
+            if (profileLocationAllowed) startTracking();
             updateWelcomeName();
             applyHomeLanguage();
             speak("Your profile has been saved. Your patient ID is " + USER_ID + ".");
@@ -1207,6 +1239,7 @@
         if (profileLocationAllowed) {
             profileLocationAllowed = false;
             localStorage.setItem("smritiLocationAllowed", "false");
+            stopTracking();
             updateProfileLocationStatus();
             return;
         }
@@ -1214,6 +1247,7 @@
             function () {
                 profileLocationAllowed = true;
                 localStorage.setItem("smritiLocationAllowed", "true");
+                startTracking();
                 updateProfileLocationStatus();
                 alert("Location access allowed successfully.");
             },
@@ -1237,6 +1271,114 @@
     loadProfile();
     renderContacts();
     applyHomeLanguage();
+
+    /* =========================
+       PERIODIC LOCATION PINGS (consent-gated, offline-safe)
+       The server also refuses pings unless consent was recorded, so revoking really stops sharing.
+       Works while the app is open; background tracking needs a native app (docs/NATIVE_APPS.md).
+    ========================= */
+    let trackingTimer = null;
+    function syncConsent(allowed) {
+        if (!localStorage.getItem("manovaToken")) return;
+        fetch("/api/consent", { method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ allowed: !!allowed }) }).catch(() => {});
+    }
+    function sendLocationPing() {
+        if (!profileLocationAllowed || !navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(pos => {
+            localStorage.setItem("manovaLastLoc", JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now() }));
+            manovaPost("/api/update_location", { user_id: USER_ID, latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        }, () => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 });
+    }
+    function clearTrackingTimer() { if (trackingTimer) clearInterval(trackingTimer); trackingTimer = null; }
+    function stopTracking() { clearTrackingTimer(); syncConsent(false); }
+    function startTracking() {
+        clearTrackingTimer();
+        if (!profileLocationAllowed) return;
+        syncConsent(true);
+        sendLocationPing();
+        trackingTimer = setInterval(sendLocationPing, 30000);
+    }
+    startTracking();
+
+    /* =========================
+       PRIVACY PANEL: link codes, audit log, erasure, login
+    ========================= */
+    const $ = id => document.getElementById(id);
+    function showPin() {
+        const pin = localStorage.getItem("manovaPin");
+        const box = $("pinNotice");
+        if (!box) return;
+        box.style.display = pin ? "block" : "none";
+        box.textContent = pin ? "Your PIN: " + pin + " (write it down, you need it to log in on a new phone)" : "";
+        if (pin) {
+            const done = document.createElement("button");
+            done.type = "button"; done.className = "location-toggle"; done.textContent = "I wrote it down - hide it";
+            done.onclick = () => { localStorage.removeItem("manovaPin"); showPin(); };
+            box.appendChild(document.createElement("br")); box.appendChild(done);
+        }
+    }
+    async function makeLinkCode() {
+        const res = await fetch("/api/link_code", { method: "POST" });
+        if (!res.ok) { $("linkCodeBox").textContent = "Please save your profile first."; return; }
+        const d = await res.json();
+        $("linkCodeBox").textContent = "Code: " + d.code + "  (valid " + d.expires_in_minutes + " minutes)";
+        speak("Your code is " + d.code.split("").join(" ") + ". Tell it to your caregiver.");
+    }
+    async function loadCaregivers() {
+        const list = $("caregiverList");
+        if (!list || !localStorage.getItem("manovaToken")) return;
+        try {
+            const res = await fetch("/api/my_caregivers");
+            const rows = res.ok ? await res.json() : [];
+            list.textContent = "";
+            rows.forEach(c => {
+                const row = document.createElement("div");
+                row.style.margin = "6px 0";
+                row.append("👤 " + c.name + " ");
+                const b = document.createElement("button");
+                b.type = "button"; b.className = "location-toggle"; b.textContent = "Remove";
+                b.onclick = () => removeCaregiver(c.id, c.name);
+                row.appendChild(b); list.appendChild(row);
+            });
+        } catch (e) {}
+    }
+    async function removeCaregiver(id, name) {
+        if (!confirm("Stop sharing with " + name + "?")) return;
+        await fetch("/api/unlink_caregiver", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caregiver_id: id }) });
+        loadCaregivers();
+    }
+    async function loadAccessLog() {
+        const box = $("accessLogBox");
+        const res = await fetch("/api/access_log");
+        const rows = res.ok ? await res.json() : [];
+        box.textContent = rows.length ? "" : "Nobody has viewed your data yet.";
+        rows.forEach(r => {
+            const line = document.createElement("div");
+            line.textContent = r.timestamp + " - " + (r.caregiver ? r.caregiver + " " : "") + r.action;
+            box.appendChild(line);
+        });
+    }
+    async function eraseData(scope) {
+        const msg = scope === "all" ? "Delete ALL your data and your account? This cannot be undone."
+                                    : "Delete your saved location history? This cannot be undone.";
+        if (!confirm(msg)) return;
+        const res = await fetch("/api/erase_my_data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scope: scope }) });
+        if (!res.ok) { alert("Could not delete right now."); return; }
+        if (scope === "all") { localStorage.clear(); location.reload(); } else { alert("Location history deleted."); }
+    }
+    async function loginOnThisDevice() {
+        const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: Number($("loginId").value), secret: $("loginPin").value }) });
+        if (!res.ok) { alert("Wrong Patient ID or PIN."); return; }
+        const d = await res.json();
+        localStorage.setItem("manovaToken", d.token);
+        localStorage.setItem("manovaUserId", d.user_id);
+        location.reload();
+    }
+    window.addEventListener("manova-auth-expired", () => {
+        if (!window.__authWarned) { window.__authWarned = true; alert("Your login has expired. Open Profile and log in with your Patient ID and PIN."); }
+    });
 </script>
 <script>
 if ("serviceWorker" in navigator) {
