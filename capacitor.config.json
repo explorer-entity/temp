@@ -1,0 +1,10 @@
+{
+  "appId": "com.manova.app",
+  "appName": "Manova",
+  "webDir": "capwww",
+  "server": {
+    "url": "http://10.0.2.2:5000",
+    "allowNavigation": ["*"],
+    "cleartext": true
+  }
+}
